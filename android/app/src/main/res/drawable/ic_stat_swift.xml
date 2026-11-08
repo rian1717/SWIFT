@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="66"
+    android:viewportHeight="66">
+    <!-- Status-bar icons must be a single flat colour. This is the S mark. -->
+    <group
+        android:translateX="-22"
+        android:translateY="-23">
+        <path android:fillColor="#FFFFFF" android:pathData="M36,28 H74 V40 H36 Z" />
+        <path android:fillColor="#FFFFFF" android:pathData="M36,28 H48 V54 H36 Z" />
+        <path android:fillColor="#FFFFFF" android:pathData="M36,46 H74 V58 H36 Z" />
+        <path android:fillColor="#FFFFFF" android:pathData="M62,46 H74 V76 H62 Z" />
+        <path android:fillColor="#FFFFFF" android:pathData="M36,64 H74 V76 H36 Z" />
+    </group>
+</vector>

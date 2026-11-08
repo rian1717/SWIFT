@@ -1,0 +1,53 @@
+name: Android compatibility report
+description: Report a Quick Share discovery or transfer problem
+title: "[Compatibility]: "
+labels: ["compatibility"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include transfer PINs, API tokens, private file names/content, or packet captures.
+  - type: input
+    id: build
+    attributes:
+      label: SWIFT version/build
+      placeholder: 0.2.0, build 34001, commit abc1234
+    validations:
+      required: true
+  - type: input
+    id: mac
+    attributes:
+      label: Mac and macOS
+      placeholder: MacBook Pro M4, macOS 27.0
+    validations:
+      required: true
+  - type: input
+    id: phone
+    attributes:
+      label: Phone and Android
+      placeholder: Pixel 8, Android 16
+    validations:
+      required: true
+  - type: dropdown
+    id: direction
+    attributes:
+      label: Direction
+      options:
+        - Android to Mac
+        - Mac to Android
+        - Both
+    validations:
+      required: true
+  - type: textarea
+    id: network
+    attributes:
+      label: Network setup
+      description: Same SSID, guest network, mesh, VPN/firewall, and client isolation state.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps and observed result
+    validations:
+      required: true

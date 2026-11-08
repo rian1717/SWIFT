@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  swift:
+    runs-on: macos-26
+    defaults:
+      run:
+        working-directory: SWIFT
+    steps:
+      - uses: actions/checkout@v4
+      - name: Swift version
+        run: swift --version
+      - name: Build
+        run: swift build --build-tests
+      - name: Test
+        run: swift test
+      - name: Release build
+        run: swift build -c release
+      - name: Package app
+        run: Packaging/build-app.sh release
+      - name: Validate bundle
+        run: |
+          plutil -lint build/SWIFT.app/Contents/Info.plist
+          codesign --verify --deep --strict build/SWIFT.app

@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "lineLength": 120,
+  "indentation": {
+    "spaces": 4
+  },
+  "respectsExistingLineBreaks": true,
+  "rules": {
+    "AlwaysUseLowerCamelCase": true,
+    "DoNotUseSemicolons": true,
+    "FileScopedDeclarationPrivacy": true,
+    "NeverUseForceTry": true,
+    "NeverUseImplicitlyUnwrappedOptionals": true,
+    "NoAccessLevelOnExtensionDeclaration": true,
+    "NoBlockComments": true,
+    "NoCasesWithOnlyFallthrough": true,
+    "NoEmptyTrailingClosureParentheses": true,
+    "NoLabelsInCasePatterns": true,
+    "NoLeadingUnderscores": false,
+    "NoParensAroundConditions": true,
+    "NoVoidReturnOnFunctionSignature": true,
+    "OmitExplicitReturns": false,
+    "OneCasePerLine": true,
+    "OrderedImports": true,
+    "ReturnVoidInsteadOfEmptyTuple": true,
+    "UseEarlyExits": false,
+    "UseLetInEveryBoundCaseVariable": true,
+    "UseShorthandTypeNames": true,
+    "UseSingleLinePropertyGetter": false,
+    "UseSynthesizedInitializer": true,
+    "UseTripleSlashForDocumentationComments": true,
+    "ValidateDocumentationComments": false
+  }
+}

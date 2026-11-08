@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.SWIFT" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/orange</item>
+        <item name="colorOnPrimary">@android:color/white</item>
+        <item name="colorSurface">@color/card</item>
+        <item name="android:windowBackground">@color/bg</item>
+        <item name="android:statusBarColor">@color/navy</item>
+        <item name="android:navigationBarColor">@color/bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="materialButtonStyle">@style/Widget.SWIFT.Button</item>
+    </style>
+
+    <style name="Theme.SWIFT.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/navy</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash</item>
+        <item name="windowSplashScreenIconBackgroundColor">@color/navy</item>
+        <item name="postSplashScreenTheme">@style/Theme.SWIFT</item>
+    </style>
+
+    <style name="Widget.SWIFT.Button" parent="Widget.Material3.Button">
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:minHeight">56dp</item>
+        <item name="android:paddingTop">14dp</item>
+        <item name="android:paddingBottom">14dp</item>
+        <item name="android:paddingLeft">20dp</item>
+        <item name="android:paddingRight">20dp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:gravity">center</item>
+        <item name="android:letterSpacing">0</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:stateListAnimator">@null</item>
+        <item name="cornerRadius">28dp</item>
+        <item name="elevation">0dp</item>
+        <item name="backgroundTint">@color/orange</item>
+        <item name="android:textColor">@android:color/white</item>
+    </style>
+
+    <style name="Widget.SWIFT.Button.Quiet" parent="Widget.SWIFT.Button">
+        <item name="backgroundTint">@color/quiet</item>
+        <item name="android:textColor">@color/ink</item>
+    </style>
+
+    <style name="Widget.SWIFT.Button.Danger" parent="Widget.SWIFT.Button">
+        <item name="backgroundTint">@color/danger_fill</item>
+        <item name="android:textColor">@color/danger</item>
+    </style>
+
+    <style name="Text.SWIFT.CardTitle" parent="TextAppearance.Material3.TitleLarge">
+        <item name="android:textColor">@color/ink</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="Text.SWIFT.Help" parent="TextAppearance.Material3.BodyMedium">
+        <item name="android:textColor">@color/muted</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:lineSpacingExtra">2dp</item>
+    </style>
+</resources>

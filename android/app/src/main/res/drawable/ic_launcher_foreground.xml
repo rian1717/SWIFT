@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Bold geometric S. -->
+    <path
+        android:fillColor="#E8772E"
+        android:pathData="M36,28 H74 V40 H36 Z" />
+    <path
+        android:fillColor="#E8772E"
+        android:pathData="M36,28 H48 V54 H36 Z" />
+    <path
+        android:fillColor="#E8772E"
+        android:pathData="M36,46 H74 V58 H36 Z" />
+    <path
+        android:fillColor="#E8772E"
+        android:pathData="M62,46 H74 V76 H62 Z" />
+    <path
+        android:fillColor="#E8772E"
+        android:pathData="M36,64 H74 V76 H36 Z" />
+    <!-- Short dock under the S, the same mark as before. -->
+    <path
+        android:fillColor="#E8772E"
+        android:pathData="M44,80 H64 V85 H44 Z" />
+</vector>

@@ -1,0 +1,26 @@
+included:
+  - SWIFT/Sources
+  - SWIFT/Tests
+
+excluded:
+  - SWIFT/.build
+
+line_length:
+  warning: 120
+  ignores_comments: true
+  ignores_urls: true
+
+type_body_length:
+  warning: 500
+
+file_length:
+  warning: 700
+
+identifier_name:
+  min_length: 2
+  excluded:
+    - id
+    - x
+    - y
+
+reporter: xcode

@@ -1,0 +1,117 @@
+#!/usr/bin/env bash
+# swiftapp — drive the running SWIFT app from the terminal (or an AI/tool).
+# Talks to the app's localhost API on 127.0.0.1:47821.
+set -euo pipefail
+
+BASE="http://127.0.0.1:47821"
+TOKEN_FILE="$HOME/.config/swift/token"
+
+usage() {
+  cat <<'EOF'
+swiftapp — send files to nearby Android devices via the SWIFT app.
+
+USAGE
+  swiftapp list [--json]                  List devices currently visible for sending
+  swiftapp send <file>... --to <name>     Send file(s) to a device (name or id);
+                                          blocks until done (exit 0 = success)
+  swiftapp status [--json]                Show active/recent transfers
+  swiftapp --help
+
+OPTIONS
+  --json    Print raw JSON instead of formatted text (for scripts / AI).
+  --to <n>  Target device: a name from `swiftapp list`, or its id.
+
+EXAMPLES
+  swiftapp list --json
+  swiftapp send ~/photo.jpg --to "Noise's phone"
+  swiftapp send a.jpg b.pdf --to Pixel --json
+
+OUTPUT (send --json)   {"ok":true,"pin":"8374","error":null}
+EXIT CODES             0 ok · 1 failed/unreachable · 2 usage error
+
+NOTES
+  * SWIFT.app must be running — it hosts the local API on 127.0.0.1:47821
+    (loopback only; token at ~/.config/swift/token).
+  * The receiver must always accept the transfer (a PIN prompt on their device).
+  * Requires "Allow the swiftapp command line" to be ON in SWIFT > Settings >
+    Automation. It is off by default.
+  * Full API + agent guide: docs/API.md in the SWIFT repo.
+EOF
+}
+
+api() { # method path [json-body] — prints the body, exits non-zero on HTTP error
+  local method="$1" path="$2" data="${3:-}"
+  local token; token="$(cat "$TOKEN_FILE" 2>/dev/null || true)"
+  [[ -n "$token" ]] || { echo "swiftapp: no token at $TOKEN_FILE — launch the SWIFT app once." >&2; exit 1; }
+  local args=(-s -m 600 -w '\n%{http_code}' -H "Authorization: Bearer $token")
+  if [[ -n "$data" ]]; then
+    args+=(-X "$method" -H "Content-Type: application/json" -d "$data")
+  fi
+  local raw
+  raw="$(curl "${args[@]}" "$BASE$path" 2>/dev/null)" || {
+    echo "swiftapp: can't reach SWIFT on $BASE — is the app running, and is" >&2
+    echo "       Settings > Automation > \"Allow the swiftapp command line\" on?" >&2
+    exit 1; }
+  local code="${raw##*$'\n'}" body="${raw%$'\n'*}"
+  # Report HTTP failures here rather than handing an error object to a parser
+  # that expects a list.
+  case "$code" in
+    # 502 is /send reporting a failed transfer — its body is structured
+    # {"ok":false,"error":…}, so the caller interprets it.
+    200|502) printf '%s\n' "$body" ;;
+    401) echo "swiftapp: token rejected — delete $TOKEN_FILE and relaunch SWIFT." >&2; exit 1 ;;
+    000) echo "swiftapp: no response from $BASE." >&2; exit 1 ;;
+    *)   echo "swiftapp: API returned HTTP $code: $body" >&2; exit 1 ;;
+  esac
+}
+
+cmd="${1:-}"
+case "$cmd" in
+  -h|--help|"") usage ;;
+
+  list)
+    out="$(api GET /devices)"
+    if [[ "${2:-}" == "--json" ]]; then echo "$out"; else
+      echo "$out" | python3 -c '
+import sys,json
+d=json.load(sys.stdin)
+if not d: print("No visible devices."); sys.exit()
+w=max(len(x["name"]) for x in d)
+for x in d:
+    print(f'"'"'{x["name"]:<{w}}  {x["type"]}{"  · seen before" if x.get("known") else ""}'"'"')'
+    fi ;;
+
+  status)
+    out="$(api GET /transfers)"
+    if [[ "${2:-}" == "--json" ]]; then echo "$out"; else
+      echo "$out" | python3 -c '
+import sys,json
+d=json.load(sys.stdin)
+if not d: print("No transfers."); sys.exit()
+for x in d: print(f'"'"'{x["title"]}  -> {x["device"]}  {x["phase"]} {x["percent"]}%'"'"')'
+    fi ;;
+
+  send)
+    shift; files=(); to=""; asjson=0
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+        --to) to="${2:-}"; shift 2 ;;
+        --json) asjson=1; shift ;;
+        *) files+=("$1"); shift ;;
+      esac
+    done
+    [[ -n "$to" && ${#files[@]} -gt 0 ]] || { echo "usage: swiftapp send <file>... --to <name>" >&2; exit 2; }
+    body="$(python3 -c '
+import sys,json,os
+print(json.dumps({"paths":[os.path.abspath(p) for p in sys.argv[2:]], "to":sys.argv[1]}))' "$to" "${files[@]}")"
+    echo "Sending ${#files[@]} file(s) to \"$to\"…" >&2
+    resp="$(api POST /send "$body")"
+    [[ "$asjson" == 1 ]] && echo "$resp"
+    ok="$(echo "$resp" | python3 -c 'import sys,json;print(json.load(sys.stdin).get("ok"))' 2>/dev/null || echo False)"
+    if [[ "$ok" == "True" ]]; then echo "✓ Sent to \"$to\"."; else
+      err="$(echo "$resp" | python3 -c 'import sys,json;print(json.load(sys.stdin).get("error"))' 2>/dev/null || echo "unknown")"
+      echo "✗ Failed: $err" >&2; exit 1
+    fi ;;
+
+  *) echo "swiftapp: unknown command '$cmd'" >&2; usage; exit 2 ;;
+esac

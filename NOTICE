@@ -1,0 +1,29 @@
+SWIFT
+Copyright 2026 SWIFT contributors
+
+This product includes software derived from QShare at commit
+2a26e30a978d2344c05f6927c44cedc25fecaf35, originally distributed under the
+Zero-Clause BSD License:
+
+    Copyright (c) 2026 kanin-design
+
+    Permission to use, copy, modify, and/or distribute this software for any
+    purpose with or without fee is hereby granted.
+
+    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+    MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
+    IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+The Quick Share LAN protocol behavior is based on the public NearDrop protocol
+specification by Grigory Klyushnikov, released under The Unlicense:
+https://github.com/grishka/NearDrop
+
+Protocol message definitions descend from Google Nearby sources distributed
+under the Apache License, Version 2.0.
+
+"Quick Share", "Nearby Share", Android, and Google are trademarks of Google
+LLC. SWIFT is not affiliated with or endorsed by Google.

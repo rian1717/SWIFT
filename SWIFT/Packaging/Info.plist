@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDisplayName</key>
+	<string>SWIFT</string>
+	<key>CFBundleExecutable</key>
+	<string>SWIFT</string>
+	<key>CFBundleIconFile</key>
+	<string>AppIcon</string>
+	<key>CFBundleIconName</key>
+	<string>AppIcon</string>
+	<key>CFBundleIdentifier</key>
+	<string>app.swift.mac</string>
+	<key>CFBundleName</key>
+	<string>SWIFT</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>0.2.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>26.0</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_FC9F5ED42C8A._tcp</string>
+		<string>_swift._tcp</string>
+		<string>_swiftdevice._tcp</string>
+		<string>_swiftphoto._tcp</string>
+	</array>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>SWIFT uses the local network to find nearby Android devices, transfer files, and receive clipboard copies.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>SWIFT uses Bluetooth to read the name of a nearby phone. Quick Share leaves that name out of the Wi-Fi announcement.</string>
+	<key>SWIFTBuildDate</key>
+	<string>__DATE__</string>
+	<key>SWIFTGitCommit</key>
+	<string>__COMMIT__</string>
+	<key>SWIFTReleaseStage</key>
+	<string>alpha</string>
+</dict>
+</plist>

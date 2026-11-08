@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ic_background">#1D2B40</color>
+    <color name="navy">#1D2B40</color>
+    <color name="orange">#E8772E</color>
+    <color name="on_navy">#F6F1EA</color>
+    <color name="on_navy_muted">#C9C0B4</color>
+    <color name="bg">#F6F1EA</color>
+    <color name="ink">#1D2B40</color>
+    <color name="muted">#5E6A7A</color>
+    <color name="accent">#E8772E</color>
+    <color name="danger">#C2413B</color>
+    <color name="danger_fill">#F8E6E4</color>
+    <color name="card">#FFFFFF</color>
+    <color name="line">#E6DDD2</color>
+    <color name="field">#F3EEE8</color>
+    <color name="quiet">#F3EEE8</color>
+</resources>
