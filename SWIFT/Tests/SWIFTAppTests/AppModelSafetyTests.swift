@@ -60,6 +60,34 @@ final class AppModelSafetyTests: XCTestCase {
     // MARK: Every transfer requires explicit consent
 
     /// Being known is not consent. A sender accepted before must still prompt.
+    func testAPairedPhoneKeepsItsFullNameWhenItAdvertisesOnlyTheModel() {
+        model.acceptPairedPhone("Rai's Pixel 8")
+        model.serviceDidDiscover(RemoteDevice(id: "pixel", name: "Pixel 8", type: .phone))
+
+        XCTAssertEqual(model.myDevices.map(\.name), ["Rai's Pixel 8"])
+        XCTAssertTrue(model.nearbyDevices.isEmpty)
+    }
+
+    func testAKnownPhoneKeepsItsFullNameToo() {
+        model.remember("Rai's Pixel 8")
+        model.serviceDidDiscover(RemoteDevice(id: "pixel", name: "Pixel 8", type: .phone))
+        XCTAssertEqual(model.nearbyDevices.map(\.name), ["Rai's Pixel 8"])
+    }
+
+    func testADifferentModelIsNotMistakenForARememberedPhone() {
+        model.acceptPairedPhone("Rai's Pixel 8")
+        model.serviceDidDiscover(RemoteDevice(id: "pro", name: "Pixel 8 Pro", type: .phone))
+        XCTAssertEqual(model.nearbyDevices.map(\.name), ["Pixel 8 Pro"])
+    }
+
+    func testOnlyAnInstalledCopyMayOpenAtLogin() {
+        XCTAssertTrue(LaunchAtLogin.isInstalledCopy(path: "/Applications/SWIFT.app", home: "/Users/a"))
+        XCTAssertTrue(LaunchAtLogin.isInstalledCopy(path: "/Users/a/Applications/SWIFT.app", home: "/Users/a"))
+        XCTAssertFalse(LaunchAtLogin.isInstalledCopy(path: "/Users/a/project/SWIFT/build/SWIFT.app", home: "/Users/a"))
+        XCTAssertFalse(LaunchAtLogin.isInstalledCopy(path: "/Applications/Other/SWIFT.app", home: "/Users/a"))
+        XCTAssertFalse(LaunchAtLogin.isInstalledCopy(path: "/usr/local/bin/swift-test", home: "/Users/a"))
+    }
+
     func testAPhoneIsNotListedTwiceAfterItsNameGrows() {
         XCTAssertEqual(AppModel.withoutDuplicates(["Rai's Pixel 8", "rai's pixel 8", "A32"]), ["Rai's Pixel 8", "A32"])
     }

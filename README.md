@@ -37,7 +37,7 @@ Install it from source with one command, or download the ready-made files from t
 - **PIN verification** — a 4-digit code on both screens before anything moves
 - **Explicit consent** — every transfer requires PIN verification and approval, on the Mac and in the Android app, including devices under My devices
 - **QR code** — reach a phone that can't discover you
-- **Menu-bar app** — keeps running with the window closed
+- **Menu-bar app** — keeps running with the window closed, and opens by itself at login (turn it off in Settings → Open at login)
 - **Command-line API** — drive it from scripts or an agent (off by default)
 - **Clipboard** — pair once. After that, copy on the Android phone and press ⌘V on the Mac. iPhone copies already paste through Apple Handoff.
 

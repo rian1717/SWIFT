@@ -71,10 +71,14 @@ fi
 # extension's sandbox entitlements and PlugInKit would reject it.
 if [[ -d "$OUT/Contents/PlugIns/SWIFTShareExtension.appex" ]]; then
   codesign --force --sign - \
+    -r='designated => identifier "app.swift.mac.share"' \
     --entitlements "$ROOT_DIR/SWIFTShareExtension/SWIFTShareExtension.entitlements" \
     "$OUT/Contents/PlugIns/SWIFTShareExtension.appex" >/dev/null
 fi
-codesign --force --sign - "$OUT" >/dev/null 2>&1 || \
+# The signature is "ad hoc", and by default macOS pins it to this one build, so
+# every new build asked again for Bluetooth and Local Network. Tying it to the
+# app's identifier instead lets those answers survive an update.
+codesign --force --sign - -r='designated => identifier "app.swift.mac"' "$OUT" >/dev/null 2>&1 || \
   echo "  (codesign skipped — app will still run, may re-prompt for network)"
 
 echo "✓ Built $OUT"

@@ -61,8 +61,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        NSApp.setActivationPolicy(.regular)   // show the window + Dock icon on launch
-        NSApp.activate(ignoringOtherApps: true)
+        if Self.launchedAtLogin() {
+            // Started by macOS at login: stay in the menu bar, no window.
+            NSApp.setActivationPolicy(.accessory)
+            Self.hideMainWindow()
+        } else {
+            NSApp.setActivationPolicy(.regular)   // show the window + Dock icon on launch
+            NSApp.activate(ignoringOtherApps: true)
+        }
         let center = UNUserNotificationCenter.current()
         center.delegate = self
         let show = UNNotificationAction(identifier: "show", title: "Show in Finder", options: [.foreground])
@@ -73,6 +79,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         ])
         center.requestAuthorization(options: [.alert, .sound]) { _, _ in }
         Self.enableShareExtension()
+    }
+
+    /// True when macOS started the app because it is a login item.
+    private static func launchedAtLogin() -> Bool {
+        guard let event = NSAppleEventManager.shared().currentAppleEvent else { return false }
+        let openApplication: AEEventID = 0x6F617070   // 'oapp'
+        let propData: AEKeyword = 0x70726474          // 'prdt'
+        let loggedIn: UInt32 = 0x6C676974             // 'lgit'
+        return event.eventID == openApplication
+            && event.paramDescriptor(forKeyword: propData)?.enumCodeValue == loggedIn
+    }
+
+    /// The window opens a moment after launch, so close it a few times.
+    private static func hideMainWindow() {
+        for delay in [0.2, 0.7, 1.6] {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                for window in NSApp.windows where window.identifier?.rawValue == "main-window" {
+                    window.close()
+                }
+            }
+        }
     }
 
     /// The share sheet lists SWIFT next to AirDrop only after this Mac has

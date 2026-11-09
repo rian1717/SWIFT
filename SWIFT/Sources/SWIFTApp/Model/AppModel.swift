@@ -112,6 +112,9 @@ final class AppModel {
     // Settings (persisted)
     var downloadDirectory: URL = AppModel.defaultDownloadDirectory()
     var startVisible: Bool = false
+    /// SWIFT opens by itself at login, quietly in the menu bar.
+    private(set) var launchAtLogin = false
+    private(set) var launchAtLoginNeedsApproval = false
     var appearance: AppAppearance = .system
     /// Live system appearance. "System" resolves to a concrete scheme because
     /// `.preferredColorScheme(nil)` does not reliably reset a window that was
@@ -190,7 +193,9 @@ final class AppModel {
         self.clipboardEnabled = prefs.clipboardEnabled
         self.appearance = prefs.appearance
         self.knownDevices = prefs.loadKnownDevices()
-        self.pairedPhoneNames = Self.withoutDuplicates(prefs.loadPairedPhones())
+        let storedPhones = prefs.loadPairedPhones()
+        self.pairedPhoneNames = Self.withoutDuplicates(storedPhones)
+        if pairedPhoneNames.count != storedPhones.count { prefs.save(pairedPhones: pairedPhoneNames) }
         self.removedPhoneNames = prefs.loadRemovedPhones()
         self.recentFiles = prefs.loadRecentFiles()
         if let saved = prefs.deviceName?.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -214,6 +219,7 @@ final class AppModel {
         if usesRealDefaultService { startShareBridge() }
         if usesRealDefaultService && clipboardEnabled { startClipboardServer() }
         if usesRealDefaultService { startCompanionBrowser() }
+        if usesRealDefaultService { prepareLaunchAtLogin() }
 
         appearanceObserver.set(DistributedNotificationCenter.default().addObserver(
             forName: Notification.Name("AppleInterfaceThemeChangedNotification"),
@@ -686,6 +692,31 @@ final class AppModel {
         setVisible(!wantsVisible)
     }
 
+    /// The first run of an installed copy turns "Open at login" on, once.
+    /// After that the person's choice in Settings is what counts.
+    private func prepareLaunchAtLogin() {
+        guard LaunchAtLogin.isInstalledCopy() else { return }
+        if !prefs.launchAtLoginDecided {
+            prefs.launchAtLoginDecided = true
+            try? LaunchAtLogin.set(true)
+        }
+        refreshLaunchAtLogin()
+    }
+
+    private func refreshLaunchAtLogin() {
+        launchAtLogin = LaunchAtLogin.isEnabled
+        launchAtLoginNeedsApproval = LaunchAtLogin.needsApproval
+    }
+
+    var canLaunchAtLogin: Bool { LaunchAtLogin.isInstalledCopy() }
+
+    func setLaunchAtLogin(_ on: Bool) {
+        guard canLaunchAtLogin else { return }
+        prefs.launchAtLoginDecided = true
+        do { try LaunchAtLogin.set(on) } catch { NSLog("SWIFT login item: \(error)") }
+        refreshLaunchAtLogin()
+    }
+
     /// Records the intent immediately, then asks the engine. The choice sticks
     /// across launches, so Receive does not turn itself off.
     func setVisible(_ on: Bool) {
@@ -932,8 +963,13 @@ extension AppModel: SWIFTServiceDelegate {
         let alias = paired
             ? (prefs.nickname(matching: device.name) ?? previous.flatMap { prefs.nickname(matching: $0.name) })
             : nil
+        // A phone's own app may announce only the model ("Pixel 8") while its
+        // Quick Share name ("Rai's Pixel 8") is the one this Mac already knows.
+        // The longer name wins, so the row does not change when the screen wakes.
+        let remembered = pairedPhoneNames + knownDevices.map(\.name)
+        let fuller = remembered.first { DeviceName.isShorterPiece(device.name, of: $0) }
         let name = DeviceName.display(
-            existing: previous?.name, advertised: device.name, bluetooth: nil, alias: alias)
+            existing: previous?.name, advertised: fuller ?? device.name, bluetooth: nil, alias: alias)
         adoptPairedName(name)
         if let index = discoveredDevices.firstIndex(where: { $0.id == device.id }) {
             discoveredDevices[index].name = name

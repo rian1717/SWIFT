@@ -18,12 +18,15 @@ SWIFT uses semantic versioning after the first stable release.
 - The Android app no longer saves a file on its own. Every Quick Share transfer shows the PIN and Accept or Decline first, including from a paired Mac. No answer within 60 seconds is a decline. Clipboard sync is unchanged.
 
 ### Fixed
+- A paired phone keeps its full name ("Rai's Pixel 8") when its screen wakes and the SWIFT app announces only the model ("Pixel 8").
+- macOS no longer asks for Bluetooth and Local Network again after each new build. The app is signed as "app.swift.mac" rather than as one exact build, so the answers carry over to updates.
 - A paired phone whose name grew from its model to its full name is no longer listed twice.
 - The clipboard pop-up on the Mac says Copying and Copied.
 
 - A phone added by scanning a QR code keeps its name even when it stops advertising right after the scan.
 
 ### Added
+- SWIFT opens by itself when you log in and waits quietly in the menu bar, so a phone can find the Mac without opening the app first. The first run of an installed copy turns this on once, and **Open at login** in Settings turns it off.
 - `SWIFT/Packaging/install.sh` builds the Mac app from source and installs it in one command, and says why when it cannot.
 - The Android project has a Gradle wrapper, so `./gradlew assembleDebug` builds an installable app with no setup beyond Android Studio.
 

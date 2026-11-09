@@ -112,8 +112,7 @@ struct SettingsView: View {
     /// Both background services as rows in one standard list card, so they
     /// line up exactly with every other multi-row card (e.g. Known senders).
     private var servicesCard: some View {
-        Card {
-            ElementList(items: [
+        var rows = [
                 ServiceToggle(
                     id: "visible",
                     title: "Visible on launch",
@@ -129,7 +128,21 @@ struct SettingsView: View {
                     help: "Serves 127.0.0.1:\(String(ControlServer.port)). Anything running as you can then send any file it can read.",
                     isOn: Binding(get: { model.controlAPIEnabled },
                                   set: { model.setControlAPIEnabled($0) }))
-            ]) { item in
+            ]
+        // Offered for an installed copy only, so a build run from the project
+        // folder never registers itself.
+        if model.canLaunchAtLogin {
+            rows.insert(ServiceToggle(
+                id: "login",
+                title: "Open at login",
+                subtitle: model.launchAtLoginNeedsApproval
+                    ? "Allow SWIFT in System Settings → General → Login Items."
+                    : "SWIFT starts quietly in the menu bar when you log in.",
+                isOn: Binding(get: { model.launchAtLogin },
+                              set: { model.setLaunchAtLogin($0) })), at: 1)
+        }
+        return Card {
+            ElementList(items: rows) { item in
                 ToggleElement(title: item.title, subtitle: item.subtitle, isOn: item.isOn)
                     .help(item.help ?? "")
             }

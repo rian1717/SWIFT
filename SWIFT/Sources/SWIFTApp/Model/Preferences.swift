@@ -18,6 +18,7 @@ struct Preferences {
     private enum Key {
         static let downloadDirectory = "downloadDirectoryPath"
         static let startVisible = "startVisible"
+        static let launchAtLoginDecided = "launchAtLoginDecided"
         static let appearance = "appearance"
         static let controlAPIEnabled = "controlAPIEnabled"
         static let clipboardEnabled = "clipboardEnabled"
@@ -47,6 +48,13 @@ struct Preferences {
 
     /// Absent means on. A paired Mac should already be ready to receive; the
     /// user should not have to open SWIFT and switch to Receive first.
+    /// Set once the first run has chosen whether SWIFT opens at login, so a
+    /// person who turns it off is never switched back on.
+    var launchAtLoginDecided: Bool {
+        get { defaults.bool(forKey: Key.launchAtLoginDecided) }
+        nonmutating set { defaults.set(newValue, forKey: Key.launchAtLoginDecided) }
+    }
+
     var startVisible: Bool {
         get {
             if defaults.object(forKey: Key.startVisible) == nil { return true }
