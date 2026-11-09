@@ -36,3 +36,9 @@ docs/*-Product-Documentation.pdf
 
 # Android release signing
 android/keystore.properties
+
+# Build and IDE leftovers
+android/.kotlin/
+android/.idea/
+android/captures/
+*.log

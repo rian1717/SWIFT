@@ -26,7 +26,7 @@ Pair the Android phone once. After that it stays connected. You do not pair agai
 
 An iPhone does not install anything. The Android phone shows a QR code. Safari opens it. The photo is the original file.
 
-Download the Mac app and the Android app from the [latest release](https://github.com/rian1717/SWIFT/releases/latest). You do not compile anything. Put the Mac app on the Mac, put the Android file on the phone, and keep both on the same Wi-Fi.
+Install it from source with one command, or download the ready-made files from the [latest release](https://github.com/rian1717/SWIFT/releases/latest). See [Install](#install).
 
 ## Features
 
@@ -43,31 +43,73 @@ Download the Mac app and the Android app from the [latest release](https://githu
 
 ## Install
 
-Needs **macOS 26 or later**, an Android phone, and both devices on the same Wi-Fi.
+SWIFT has two parts: the **Mac app** and the **Android app**. Install both for
+clipboard sync. Sending files to a phone that has Quick Share needs only the
+Mac app.
 
-The release files are `SWIFT-mac.zip` and `SWIFT-android.apk`. The Mac app is `SWIFT.app`.
+You need a Mac on **macOS 26 or later**, an Android phone (Android 8 or later),
+and both on the same Wi-Fi.
 
-### Mac
+### Mac app
 
-1. Unzip `SWIFT-mac.zip`, or use `SWIFT.app` from the build below.
-2. Move **SWIFT** into **Applications**.
-3. Open it. macOS says it cannot check the developer, because this build is not notarized.
-4. Control-click **SWIFT** and choose **Open**, then choose **Open** again.
-5. If macOS says the app is damaged, open Terminal and run:
+**Option 1. Build it yourself (one command).** This needs
+[Xcode 26 or later](https://developer.apple.com/xcode/) from the App Store.
+Open Xcode once so it finishes setting up, then run this in Terminal:
+
+```bash
+git clone https://github.com/rian1717/SWIFT.git
+cd SWIFT
+SWIFT/Packaging/install.sh
+```
+
+It checks your Mac, builds the app (about a minute), puts **SWIFT** in
+**Applications** and opens it. An app you build yourself opens without a macOS
+warning. When macOS asks about **Local Network**, choose **Allow**.
+
+If it stops, it prints the reason. The usual two:
+`sudo xcodebuild -license accept`, and
+`sudo xcode-select -s /Applications/Xcode.app`.
+
+**Option 2. Download it.** Get `SWIFT-mac.zip` from the
+[latest release](https://github.com/rian1717/SWIFT/releases/latest), unzip it
+and move **SWIFT** into **Applications**. This build is not notarized, so
+macOS says it cannot check the developer. Control-click **SWIFT**, choose
+**Open**, then **Open** again. If macOS says the app is damaged, run:
 
 ```bash
 xattr -dr com.apple.quarantine /Applications/SWIFT.app
 ```
 
-The zip contains `SWIFT.app`. Then control-click the app and choose **Open** again. The first launch may ask for Local Network. Allow it.
+### Android app
 
-### Android
+**Option 1. Download it.** Get `SWIFT-android.apk` from the
+[latest release](https://github.com/rian1717/SWIFT/releases/latest), copy it to
+the phone and open it. Allow installation from that source if Android asks.
 
-1. Copy the Android app onto the phone and open it.
-2. Allow installation from that source if Android asks.
-3. If Play Protect blocks it and the only button is **OK**, open the Play Store, tap your profile, open **Play Protect**, tap the gear, and turn off **Improve harmful app detection**. If that switch is missing, turn off **Scan apps with Play Protect**. Install the app, then turn the switch back on.
+**Option 2. Build it yourself.** This needs [Android Studio](https://developer.android.com/studio)
+(it brings Java 17 and the Android SDK). Then:
 
-Open SWIFT on the Mac and on the phone. The phone shows the Mac. Tap the Mac, then tap **Allow** on the Mac. That pair happens once. After that, the phone stays connected.
+```bash
+cd SWIFT/android
+export ANDROID_HOME="$HOME/Library/Android/sdk"
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+./gradlew assembleDebug
+```
+
+The app is `app/build/outputs/apk/debug/app-debug.apk`. Copy it to the phone,
+or with the phone connected by USB debugging run
+`~/Library/Android/sdk/platform-tools/adb install -r app/build/outputs/apk/debug/app-debug.apk`.
+
+If Play Protect blocks the install and the only button is **OK**, open the Play
+Store, tap your profile, open **Play Protect**, tap the gear, and turn off
+**Improve harmful app detection**. If that switch is missing, turn off **Scan
+apps with Play Protect**. Install the app, then turn the switch back on.
+
+### First run
+
+Open SWIFT on the Mac and on the phone. The phone shows the Mac. Tap the Mac,
+then tap **Allow** on the Mac. That pair happens once. After that, the phone
+stays connected.
 
 ## Using it
 
@@ -209,8 +251,9 @@ protocol details worth knowing.
 
 ```bash
 cd SWIFT
-Packaging/build-app.sh
+Packaging/build-app.sh            # build only
 open build/SWIFT.app
+Packaging/install.sh              # build and install into Applications
 ```
 
 The packaging step matters: real networking needs a proper `.app` bundle so

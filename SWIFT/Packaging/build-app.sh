@@ -14,6 +14,8 @@ PRODUCTS="$APP_DIR/.build/xcode-products"
 OBJECTS="$APP_DIR/.build/xcode-objects"
 XCODE_CONFIG="$(tr '[:lower:]' '[:upper:]' <<< "${CONFIG:0:1}")${CONFIG:1}"
 
+mkdir -p "$APP_DIR/.build"
+LOG="$APP_DIR/.build/xcodebuild.log"
 echo "▶︎ Building ($CONFIG)…"
 xcodebuild \
   -project "$ROOT_DIR/SWIFT.xcodeproj" \
@@ -22,7 +24,11 @@ xcodebuild \
   SYMROOT="$PRODUCTS" \
   OBJROOT="$OBJECTS" \
   CODE_SIGNING_ALLOWED=NO \
-  clean build >/dev/null
+  clean build >"$LOG" 2>&1 || {
+    echo "✗ The build failed. Last lines of the log ($LOG):" >&2
+    tail -25 "$LOG" >&2
+    exit 1
+  }
 BUILT_APP="$PRODUCTS/$XCODE_CONFIG/SWIFT.app"
 
 # --- build identity -----------------------------------------------------

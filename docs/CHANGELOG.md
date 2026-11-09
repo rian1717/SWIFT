@@ -24,6 +24,8 @@ SWIFT uses semantic versioning after the first stable release.
 - A phone added by scanning a QR code keeps its name even when it stops advertising right after the scan.
 
 ### Added
+- `SWIFT/Packaging/install.sh` builds the Mac app from source and installs it in one command, and says why when it cannot.
+- The Android project has a Gradle wrapper, so `./gradlew assembleDebug` builds an installable app with no setup beyond Android Studio.
 
 - A phone keeps its real name on this Mac once it has been seen or has sent a file, even if it hides its name later.
 - Native Swift 6 menu-bar application for macOS 26 and newer
