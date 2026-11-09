@@ -5,6 +5,8 @@ SWIFT uses semantic versioning after the first stable release.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-09
+
 ### Changed
 
 - The app is SWIFT. The Mac bundle id is `app.swift.mac`, the Android application id is `app.swift.clip`, clipboard discovery is `_swift._tcp`, and pairing links are `swift://clip`. Install both apps again and pair them once more. Quick Share discovery stays `_FC9F5ED42C8A._tcp`.
