@@ -42,3 +42,6 @@ android/.kotlin/
 android/.idea/
 android/captures/
 *.log
+
+# Built apps for testing and releases. They go on the Releases page, not in git.
+dist/
