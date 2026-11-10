@@ -3,7 +3,7 @@
   "spdxVersion": "SPDX-2.3",
   "dataLicense": "CC0-1.0",
   "name": "SWIFT SBOM",
-  "documentNamespace": "https://github.com/rian1717/SWIFT/spdx/2026-11-09/0.3.0",
+  "documentNamespace": "https://github.com/rian1717/SWIFT/spdx/2026-11-11/0.3.1",
   "creationInfo": {
     "created": "2026-11-05T17:00:00Z",
     "creators": [
@@ -14,7 +14,7 @@
     {
       "SPDXID": "SPDXRef-Package-SWIFT",
       "name": "SWIFT",
-      "versionInfo": "0.3.0",
+      "versionInfo": "0.3.1",
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "Apache-2.0",
@@ -24,7 +24,7 @@
         {
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
-          "referenceLocator": "pkg:swift/SWIFT@0.3.0"
+          "referenceLocator": "pkg:swift/SWIFT@0.3.1"
         }
       ]
     }

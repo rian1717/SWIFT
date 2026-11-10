@@ -5,6 +5,25 @@ SWIFT uses semantic versioning after the first stable release.
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-11-11
+
+### Fixed
+
+- A new install now works without hunting for a switch. **Paste phone copies here** is on by default, so the phone can find the Mac and pair straight away. Anyone who already turned it off keeps it off.
+- Clipboard kept failing after a phone was removed and paired again. A name left over from the removal ("Rai's Pixel 8") made the Mac refuse every copy from the re-paired phone and tell it that it had been removed. A phone with its own key is now judged by its key, not its name, and pairing again clears the old removal under the short or the long name.
+- Removing a phone on the Mac now deletes its key even when the Mac shows it under a longer name than the one it paired with.
+- Find Mac no longer loses a Mac or lists it twice, and it still finds the Mac on a router that blocks the usual discovery, by asking the addresses on the Wi-Fi directly.
+- A phone whose Mac changed address on the router finds it again and keeps copying, without pairing again.
+- The Mac's pairing QR code carries a real Wi-Fi address. It skips unplugged and virtual networks, and no longer assumes the Wi-Fi is `en0`.
+- The Mac no longer gives up when its clipboard port is busy. Two copies of SWIFT can no longer fight over it: opening a second copy shows the one already running.
+
+### Added
+
+- **Copy pairing link** in the Mac's Settings, next to the QR code.
+- The phone's pairing box takes the pairing link, a link inside a chat message, or just the 8 digits typed with or without a space. The button is now called **Pair**.
+- A clearer message when no Mac is found, with the macOS firewall step.
+
+
 ## [0.3.0] - 2026-11-09
 
 ### Changed

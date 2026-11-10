@@ -137,9 +137,9 @@ the share sheet in Gallery or Files instead.
 copies already paste through Apple Handoff when both devices use the same
 Apple ID. For Android:
 
-1. On the Mac, open **SWIFT → Settings…** and turn on **Paste phone copies here**. Leave the QR code and the 8-digit code on screen.
+1. On the Mac, open **SWIFT → Settings…**. **Paste phone copies here** is on by default. Leave the QR code and the 8-digit code on screen.
 2. Install the Android file from the [latest release](https://github.com/rian1717/SWIFT/releases/latest). It is `SWIFT-android.apk`. It is not on the Play Store. If Play Protect says the app is blocked and the only button is **OK**, open the Play Store, tap your profile, open **Play Protect**, tap the gear, and turn off **Improve harmful app detection**. If that switch is missing, turn off **Scan apps with Play Protect**. Install the app, then turn the switch back on.
-3. On the phone, scan the Mac's QR code and open it in SWIFT. Or type the 8-digit code and tap the Mac. Tapping the Mac without the code asks you to tap **Allow** once on the Mac. After that one pair, the phone stays connected.
+3. On the phone, tap **Find Mac**, then tap your Mac. The Mac asks you to tap **Allow** once. Or scan the Mac's QR code, or paste the pairing link (**Copy pairing link** in the Mac's Settings), or type the 8-digit code into the box and tap **Pair**. After that one pair, the phone stays connected, including after you remove it and pair it again.
 4. Tap **Turn on clipboard access**. Android blocks this for apps that do not come from the Play Store, so the first time takes a few extra taps:
    1. End any phone call first. Android can refuse this permission during a call.
    2. In **Accessibility → Downloaded apps**, tap **SWIFT** and try to turn it on. Android shows **Restricted setting** or **App was denied access**. Tap **Close** or **OK**. This step matters, because the option in the next step appears only after Android has shown that message once.
@@ -174,6 +174,14 @@ needs a hand:
 - Turn off any **VPN** on either device; most capture the traffic discovery needs.
 - Still nothing? **Use the QR code.** It's the designed answer to this, not a
   workaround — scanning it skips discovery entirely.
+
+### Clipboard pairing: the phone can't find the Mac
+
+- Open SWIFT on the Mac and keep it running. **Paste phone copies here** must be on (it is by default).
+- If macOS asks **Do you want the application "SWIFT" to accept incoming network connections?**, choose **Allow**. If you chose Don't Allow, open **System Settings → Network → Firewall → Options**, find SWIFT and set it to **Allow incoming connections**.
+- Choose **Allow** when macOS asks for **Local Network** access. You can change it later in **System Settings → Privacy & Security → Local Network**.
+- On the phone, type the 8 digits from the Mac's Settings into the box and tap **Pair**. This finds the Mac even when the list stays empty.
+- Only one copy of SWIFT can run at a time. If you built it yourself, quit the other copy first.
 
 ## Security
 

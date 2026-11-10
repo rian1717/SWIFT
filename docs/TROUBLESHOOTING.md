@@ -40,6 +40,18 @@ open SWIFT/build/SWIFT.app
 If permission was denied, enable it under System Settings → Privacy & Security →
 Local Network, then relaunch SWIFT.
 
+## The phone cannot find the Mac to pair clipboard
+
+1. Keep SWIFT open on the Mac. **Paste phone copies here** is on by default in
+   Settings.
+2. If macOS asked to accept incoming network connections and you chose Don't
+   Allow, open System Settings → Network → Firewall → Options and allow SWIFT.
+3. On the phone, type the 8 digits from the Mac's Settings into the box and tap
+   **Pair**, or paste the link from **Copy pairing link**. Both work when the
+   list is empty.
+4. Use one copy of SWIFT at a time. A second copy cannot take over the port or
+   the Quick Share name.
+
 ## Clipboard does not paste
 
 Follow the copy-and-paste steps in the README. The two locks that stop a first

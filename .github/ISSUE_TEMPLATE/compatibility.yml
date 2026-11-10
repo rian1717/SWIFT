@@ -11,7 +11,7 @@ body:
     id: build
     attributes:
       label: SWIFT version/build
-      placeholder: 0.3.0, build 34001, commit abc1234
+      placeholder: 0.3.1, build 34001, commit abc1234
     validations:
       required: true
   - type: input
