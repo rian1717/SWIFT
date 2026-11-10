@@ -10,22 +10,35 @@ import android.net.nsd.NsdServiceInfo
 import android.net.wifi.WifiManager
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.provider.OpenableColumns
 import android.util.Base64
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 import java.security.MessageDigest
+import java.util.Collections
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 
 /** Paired Mac plus the send path for one clipboard snapshot. */
 object ClipSync {
     private const val PREFS = "swift-clip"
     private const val MAX_BYTES = 32 * 1024 * 1024
+    private const val DISCOVER_MS = 6_000L
+    const val NO_MAC_MESSAGE =
+        "No Mac found. Open SWIFT on the Mac and keep both on the same Wi-Fi. " +
+            "If macOS asks to allow incoming connections, choose Allow. " +
+            "Or type the 8 digits from SWIFT settings below."
+    private const val MAC_SEARCH_GAP_MS = 20_000L
     private val work = Executors.newSingleThreadExecutor()
     private val main by lazy { Handler(Looper.getMainLooper()) }
     private var lastHash = ""
+    private var lastMacSearch = 0L
 
     data class Mac(val name: String, val host: String, val port: Int)
 
@@ -130,7 +143,18 @@ object ClipSync {
     /** What a pairing link points at, so the person can check it first. */
     data class LinkTarget(val name: String, val host: String)
 
-    fun describeLink(raw: String): LinkTarget? {
+    private val linkPattern = Regex("""swift://clip\?[^\s"'<>]+""", RegexOption.IGNORE_CASE)
+
+    /** The pairing link inside whatever was pasted: a chat message, a sentence, extra spaces. */
+    fun extractLink(raw: String): String? =
+        linkPattern.find(raw)?.value?.trimEnd('.', ',', ';', ')', ']')
+
+    /** The 8 digits from the Mac, typed with or without a space or dash in the middle. */
+    fun extractCode(raw: String): String? =
+        raw.filter { !it.isWhitespace() && it != '-' }.takeIf { it.length == 8 && it.all(Char::isDigit) }
+
+    fun describeLink(rawInput: String): LinkTarget? {
+        val raw = extractLink(rawInput) ?: rawInput
         val uri = try { Uri.parse(raw.trim()) } catch (_: Exception) { return null }
         val host = uri.getQueryParameter("host").orEmpty()
         val code = uri.getQueryParameter("code").orEmpty().filter { it.isDigit() }
@@ -159,7 +183,8 @@ object ClipSync {
             "The Mac did not answer. Leave Paste phone copies here turned on, stay on the same Wi-Fi, and try again."
     }
 
-    fun pairWithLink(context: Context, raw: String, done: (String) -> Unit) {
+    fun pairWithLink(context: Context, rawInput: String, done: (String) -> Unit) {
+        val raw = extractLink(rawInput) ?: rawInput
         val uri = Uri.parse(raw.trim())
         val host = uri.getQueryParameter("host").orEmpty()
         val port = uri.getQueryParameter("port")?.toIntOrNull() ?: 47822
@@ -184,29 +209,164 @@ object ClipSync {
         multicast?.setReferenceCounted(false)
         multicast?.acquire()
         val nsd = context.getSystemService(NsdManager::class.java)
+        val ended = AtomicBoolean(false)
+        val seen = Collections.synchronizedSet(HashSet<String>())
+        val report = { mac: Mac -> main.post { if (seen.add("${mac.name}|${mac.host}")) found(mac) }; Unit }
+        // Some routers block the multicast that discovery needs, but still pass
+        // ordinary traffic. When nothing was found that way, ask each address.
+        val finishOnce = {
+            if (ended.compareAndSet(false, true)) {
+                if (seen.isEmpty()) {
+                    work.execute { scanSubnet(report); main.post(finished) }
+                } else {
+                    main.post(finished)
+                }
+            }
+        }
+        // Android resolves one service at a time and fails the others, so
+        // services wait their turn here instead of being lost.
+        val waiting = ArrayDeque<NsdServiceInfo>()
+        var resolving = false
+
+        fun resolveNext() {
+            val info = synchronized(waiting) {
+                if (resolving) return
+                val next = waiting.removeFirstOrNull() ?: return
+                resolving = true
+                next
+            }
+            nsd.resolveService(info, object : NsdManager.ResolveListener {
+                override fun onServiceResolved(resolved: NsdServiceInfo) {
+                    ipv4(resolved)?.let { host ->
+                        report(Mac(resolved.serviceName, host, resolved.port.takeIf { it > 0 } ?: 47822))
+                    }
+                    synchronized(waiting) { resolving = false }
+                    resolveNext()
+                }
+                override fun onResolveFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
+                    synchronized(waiting) { resolving = false }
+                    if (errorCode == NsdManager.FAILURE_ALREADY_ACTIVE && !ended.get()) {
+                        // Something else on this phone is resolving. Try again shortly.
+                        main.postDelayed({
+                            synchronized(waiting) { waiting.addLast(serviceInfo) }
+                            resolveNext()
+                        }, 300)
+                    } else {
+                        resolveNext()
+                    }
+                }
+            })
+        }
+
         val listener = object : NsdManager.DiscoveryListener {
             override fun onServiceFound(info: NsdServiceInfo) {
-                nsd.resolveService(info, object : NsdManager.ResolveListener {
-                    override fun onServiceResolved(resolved: NsdServiceInfo) {
-                        val host = ipv4(resolved) ?: return
-                        main.post {
-                            found(Mac(resolved.serviceName, host, resolved.port.takeIf { it > 0 } ?: 47822))
-                        }
-                    }
-                    override fun onResolveFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {}
-                })
+                synchronized(waiting) { waiting.addLast(info) }
+                resolveNext()
             }
             override fun onDiscoveryStarted(serviceType: String) {}
-            override fun onDiscoveryStopped(serviceType: String) { main.post(finished) }
-            override fun onStartDiscoveryFailed(serviceType: String, errorCode: Int) { main.post(finished) }
-            override fun onStopDiscoveryFailed(serviceType: String, errorCode: Int) {}
+            override fun onDiscoveryStopped(serviceType: String) { finishOnce() }
+            override fun onStartDiscoveryFailed(serviceType: String, errorCode: Int) { finishOnce() }
+            override fun onStopDiscoveryFailed(serviceType: String, errorCode: Int) { finishOnce() }
             override fun onServiceLost(serviceInfo: NsdServiceInfo) {}
         }
         nsd.discoverServices("_swift._tcp.", NsdManager.PROTOCOL_DNS_SD, listener)
         main.postDelayed({
-            try { nsd.stopServiceDiscovery(listener) } catch (_: Exception) { finished() }
+            try { nsd.stopServiceDiscovery(listener) } catch (_: Exception) { finishOnce() }
             if (multicast?.isHeld == true) multicast.release()
-        }, 4_000)
+        }, DISCOVER_MS)
+    }
+
+    /**
+     * The Mac's address can change on the router, which used to stop every copy
+     * until the phone paired again. Finds the paired Mac on the Wi-Fi and saves
+     * its new address. Only for a phone with its own key: what a candidate
+     * receives is sealed, and a different Mac refuses it.
+     *
+     * @return true when the Mac answered at a new address.
+     */
+    private fun findMovedMac(context: Context): Boolean {
+        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val oldHost = prefs.getString("host", null) ?: return false
+        val id = prefs.getString("id", null)?.takeIf { it.isNotEmpty() } ?: return false
+        val key = prefs.getString("key", null)?.let { Base64.decode(it, Base64.NO_WRAP) } ?: return false
+        val now = SystemClock.elapsedRealtime()
+        if (lastMacSearch != 0L && now - lastMacSearch < MAC_SEARCH_GAP_MS) return false
+        lastMacSearch = now
+
+        val macs = Collections.synchronizedList(mutableListOf<Mac>())
+        val done = CountDownLatch(1)
+        main.post { discover(context, found = { macs.add(it) }, finished = { done.countDown() }) }
+        if (!done.await(DISCOVER_MS + 3_000, TimeUnit.MILLISECONDS)) return false
+
+        val path = "/clip/status"
+        val body = JSONObject().put("device", deviceLabel(context)).toString().toByteArray()
+        for (mac in macs.toList().filter { it.host != oldHost }) {
+            try {
+                val sealed = ClipCrypto.seal(body, nextCounter(context), key, path, id)
+                post(mac.host, mac.port, path, sealed, "application/octet-stream", "SWIFT $id")
+            } catch (_: Exception) {
+                continue
+            }
+            prefs.edit().putString("host", mac.host).putInt("port", mac.port).commit()
+            return true
+        }
+        return false
+    }
+
+    /** This phone's Wi-Fi address and how many bits of it name the network. */
+    private fun wifiAddress(): Pair<ByteArray, Int>? {
+        val interfaces = try { java.net.NetworkInterface.getNetworkInterfaces() } catch (_: Exception) { null } ?: return null
+        var fallback: Pair<ByteArray, Int>? = null
+        for (nic in interfaces) {
+            if (!nic.isUp || nic.isLoopback) continue
+            for (a in nic.interfaceAddresses) {
+                val ip = a.address as? java.net.Inet4Address ?: continue
+                if (!ip.isSiteLocalAddress) continue
+                val found = ip.address to a.networkPrefixLength.toInt()
+                if (nic.name.startsWith("wlan")) return found
+                if (fallback == null) fallback = found
+            }
+        }
+        return fallback
+    }
+
+    /** Asks every address on this Wi-Fi whether a SWIFT Mac answers on its port. */
+    private fun scanSubnet(found: (Mac) -> Unit) {
+        val (mine, prefix) = wifiAddress() ?: return
+        // A /24 around this phone is enough, and keeps a large network from taking minutes.
+        val bits = prefix.coerceIn(24, 30)
+        val me = mine.fold(0L) { acc, b -> (acc shl 8) or (b.toLong() and 0xff) }
+        val mask = (0xffffffffL shl (32 - bits)) and 0xffffffffL
+        val network = me and mask
+        val size = 1L shl (32 - bits)
+        val pool = Executors.newFixedThreadPool(48)
+        try {
+            val jobs = (1 until size - 1).map { network + it }.filter { it != me }.map { address ->
+                java.util.concurrent.Callable {
+                    val host = "${(address shr 24) and 0xff}.${(address shr 16) and 0xff}.${(address shr 8) and 0xff}.${address and 0xff}"
+                    try {
+                        val connection = (URL("http://$host:47822/clip/hello").openConnection() as HttpURLConnection).apply {
+                            connectTimeout = 700
+                            readTimeout = 900
+                        }
+                        try {
+                            if (connection.responseCode in 200..299) {
+                                val json = JSONObject(connection.inputStream.use { it.readBytes().toString(Charsets.UTF_8) })
+                                if (json.optBoolean("ok") && json.optString("key").isNotEmpty()) {
+                                    found(Mac(json.optString("name", "Mac"), host, 47822))
+                                }
+                            }
+                        } finally {
+                            connection.disconnect()
+                        }
+                    } catch (_: Exception) {
+                    }
+                }
+            }
+            pool.invokeAll(jobs, 8, TimeUnit.SECONDS)
+        } finally {
+            pool.shutdownNow()
+        }
     }
 
     private fun ipv4(resolved: NsdServiceInfo): String? {
@@ -253,11 +413,14 @@ object ClipSync {
             return
         }
         work.execute {
-            val message = try {
-                pairWithKey(context, mac, "code", digits, macKey)?.let { paired ->
-                    main.post { done(paired) }
-                    return@execute
-                }
+            val message = pairWithCodeNow(context, mac, digits, macKey)
+            main.post { done(message) }
+        }
+    }
+
+    private fun pairWithCodeNow(context: Context, mac: Mac, digits: String, macKey: ByteArray?): String =
+        try {
+            pairWithKey(context, mac, "code", digits, macKey) ?: run {
                 // An older Mac with no keys: the code is sent as before.
                 val body = JSONObject()
                     .put("code", digits)
@@ -266,15 +429,36 @@ object ClipSync {
                     .toByteArray()
                 val response = post(mac.host, mac.port, "/clip/pair", body, "application/json", null)
                 val json = JSONObject(response)
-                val token = json.getString("token")
                 val name = json.optString("name", mac.name)
-                save(context, mac.host, mac.port, token, name)
+                save(context, mac.host, mac.port, json.getString("token"), name)
                 "Paired with $name. Copy on this phone, then press ⌘V on the Mac."
-            } catch (error: Exception) {
-                plainPairError(error.message.orEmpty())
             }
-            main.post { done(message) }
+        } catch (error: Exception) {
+            plainPairError(error.message.orEmpty())
         }
+
+    /**
+     * Only the 8 digits were typed. Look for the Mac on this Wi-Fi and try each one
+     * that answers: the code only matches the Mac that shows it.
+     */
+    fun pairWithCodeOnWifi(context: Context, code: String, done: (String) -> Unit) {
+        val digits = code.filter { it.isDigit() }
+        if (digits.length != 8) {
+            done("Type the 8 digits from the Mac. They are under the QR code in SWIFT settings.")
+            return
+        }
+        val macs = Collections.synchronizedList(mutableListOf<Mac>())
+        discover(context, found = { macs.add(it) }, finished = {
+            work.execute {
+                val list = macs.toList()
+                var message = NO_MAC_MESSAGE
+                for (mac in list) {
+                    message = pairWithCodeNow(context, mac, digits, null)
+                    if (isPaired(context)) break
+                }
+                main.post { done(message) }
+            }
+        })
     }
 
     /**
@@ -613,6 +797,18 @@ object ClipSync {
     /** Sends one request as this phone: sealed with its key, or the old way. */
     private fun authed(context: Context, path: String, body: ByteArray): String {
         upgradeIfNeeded(context)
+        return try {
+            sendAuthed(context, path, body)
+        } catch (unreachable: IOException) {
+            // Only a real copy is worth searching for. The background "still paired?"
+            // check also fails whenever the Mac sleeps, and must not scan the Wi-Fi
+            // every half minute or hold up the next copy.
+            if (path != "/clip" || !findMovedMac(context)) throw unreachable
+            sendAuthed(context, path, body)
+        }
+    }
+
+    private fun sendAuthed(context: Context, path: String, body: ByteArray): String {
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val host = prefs.getString("host", null) ?: error("not paired")
         val port = prefs.getInt("port", 47822)

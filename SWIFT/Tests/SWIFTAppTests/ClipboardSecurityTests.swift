@@ -73,6 +73,24 @@ final class ClipboardServerSecurityTests: XCTestCase {
         server.stop()
     }
 
+    /// Two copies of SWIFT at once: the second must take over when the first quits.
+    func testServerTakesThePortOnceAnotherCopyLetsGo() async throws {
+        let second = ClipboardServer(token: token, pairCode: code, deviceName: "Test Mac",
+                                     identity: P256.KeyAgreement.PrivateKey(), phones: store,
+                                     port: port, advertise: false)
+        defer { second.stop() }
+        second.rebindDelay = 0.1
+        let refused = expectation(description: "port is taken")
+        let listening = expectation(description: "port is free")
+        second.onListening = { if $0 { listening.fulfill() } else { refused.fulfill() } }
+        second.start()
+        await fulfillment(of: [refused], timeout: 5)
+        server.stop()
+        await fulfillment(of: [listening], timeout: 5)
+        let reply = try await post("/clip/status", body: Data(), auth: "Bearer wrong")
+        XCTAssertEqual(reply.status, 401, "the second copy answers on the port")
+    }
+
     func testPairedPhoneSendsAnEncryptedCopy() async throws {
         let phone = try await pair(secret: code, auth: "code")
         XCTAssertEqual(paired, ["Pixel"])
@@ -111,6 +129,18 @@ final class ClipboardServerSecurityTests: XCTestCase {
         let copy = try await send(phone, path: "/clip", json: #"{"source":"Another name","kind":"text","text":"x"}"#, counter: 2)
         XCTAssertEqual(copy.status, 401)
         XCTAssertTrue(applied.isEmpty)
+    }
+
+    /// A removal left "Rai's Pixel 8" on the removed list. The phone pairs again as
+    /// "Pixel", later calls itself "Rai's Pixel 8", and its copies must still paste.
+    func testAPairedPhoneIsNotRefusedForANameLeftOverFromARemoval() async throws {
+        removedNames = ["Rai's Pixel 8"]
+        let phone = try await pair(secret: code, auth: "code")
+        let copy = try await send(phone, path: "/clip", json: #"{"source":"Rai's Pixel 8","kind":"text","text":"back again"}"#, counter: 3)
+        XCTAssertEqual(copy.status, 200)
+        XCTAssertEqual(applied, ["back again"])
+        let status = try await send(phone, path: "/clip/status", json: #"{"device":"Rai's Pixel 8"}"#, counter: 4)
+        XCTAssertEqual(status.status, 200)
     }
 
     func testAnOldPhoneMovesToItsOwnKeyWithTheToken() async throws {

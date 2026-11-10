@@ -5,7 +5,11 @@ import UserNotifications
 @main
 struct SWIFTApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
-    @State private var model = AppModel()
+    @State private var model: AppModel = {
+        // Before the model, because creating it claims the ports and Bonjour name.
+        SingleInstance.enforce()
+        return AppModel()
+    }()
 
     var body: some Scene {
         // `Window`, not `WindowGroup`, so "Open" focuses the one window rather
@@ -52,6 +56,28 @@ struct SWIFTApp: App {
 
 /// Ensures the app behaves as a normal foreground app when launched via
 /// `swift run` (no bundle). Harmless when run from a proper .app.
+/// Two copies share one Quick Share identity and one clipboard port, so the
+/// second can neither announce itself nor receive copies. Opening SWIFT again
+/// brings up the copy that is already running.
+enum SingleInstance {
+    @MainActor static func enforce() {
+        guard ProcessInfo.processInfo.environment["SWIFT_MOCK"] == nil,
+              let bundleID = Bundle.main.bundleIdentifier else { return }
+        let me = ProcessInfo.processInfo.processIdentifier
+        guard let other = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
+            .first(where: { $0.processIdentifier != me && !$0.isTerminated }) else { return }
+        // It may be quitting right now, as when SWIFT is reopened or reinstalled.
+        let deadline = Date().addingTimeInterval(1)
+        while Date() < deadline {
+            if other.isTerminated { return }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+        }
+        // Opening the bundle reshows its window even when it is menu-bar only.
+        if let url = other.bundleURL { NSWorkspace.shared.open(url) }
+        exit(0)
+    }
+}
+
 final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Set by the model so quitting can withdraw the Quick Share announcement.
     @MainActor static var onTerminate: (@MainActor () -> Void)?

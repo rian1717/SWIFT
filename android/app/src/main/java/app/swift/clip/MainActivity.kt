@@ -121,9 +121,18 @@ class MainActivity : Activity() {
      * this phone's copies to that Mac, so the person says yes to it first.
      */
     private fun confirmLink(raw: String) {
+        // Only the 8 digits: look for the Mac on this Wi-Fi and pair with the one that matches.
+        ClipSync.extractCode(raw)?.let { code ->
+            show("Looking for your Mac…")
+            ClipSync.pairWithCodeOnWifi(this, code) {
+                show(it)
+                if (ClipSync.isPaired(this)) showPairing = false
+            }
+            return
+        }
         val target = ClipSync.describeLink(raw)
         if (target == null) {
-            show("That link is not a SWIFT pairing code")
+            show("Paste the pairing link from SWIFT on the Mac, or type its 8 digits.")
             return
         }
         AlertDialog.Builder(this)
@@ -181,7 +190,7 @@ class MainActivity : Activity() {
         }, finished = {
             looking = false
             if (announce && macs.childCount == 0) {
-                show("No Mac found. On the Mac, open SWIFT, then Settings, and turn on Paste phone copies here. Keep both on the same Wi-Fi, then tap Find Mac again.")
+                show(ClipSync.NO_MAC_MESSAGE)
             } else if (announce) {
                 show("Tap your Mac.")
             }

@@ -68,6 +68,36 @@ final class AppModelSafetyTests: XCTestCase {
         XCTAssertTrue(model.nearbyDevices.isEmpty)
     }
 
+    /// Remove, pair again as the short name, then the long name arrives: the phone
+    /// must not still count as removed.
+    func testPairingAgainClearsARemovalEvenWhenTheLongNameArrivesLater() {
+        model.acceptPairedPhone("Rai's Pixel 8")
+        model.forgetPhone("Rai's Pixel 8")
+        XCTAssertTrue(model.isPhoneRemoved("Rai's Pixel 8"))
+
+        model.acceptPairedPhone("Pixel 8")
+        model.serviceDidDiscover(RemoteDevice(id: "pixel", name: "Rai's Pixel 8", type: .phone))
+
+        XCTAssertFalse(model.isPhoneRemoved("Rai's Pixel 8"))
+        XCTAssertFalse(model.isPhoneRemoved("Pixel 8"))
+        XCTAssertEqual(model.myDevices.map(\.name), ["Rai's Pixel 8"])
+    }
+
+    func testClipboardSyncIsOnForANewInstallAndStaysOffWhenTurnedOff() {
+        let defaults = UserDefaults(suiteName: "swift.test.\(UUID().uuidString)")!
+        let prefs = Preferences(defaults: defaults)
+        XCTAssertTrue(prefs.clipboardEnabled, "a fresh install must be findable and able to pair")
+        prefs.clipboardEnabled = false
+        XCTAssertFalse(prefs.clipboardEnabled)
+    }
+
+    func testThePairingAddressIsARealWiFiAddress() {
+        XCTAssertEqual(LANAddress.choose([("en4", "192.168.1.20"), ("en0", "192.168.1.9")]), "192.168.1.9")
+        XCTAssertEqual(LANAddress.choose([("en0", "169.254.8.8"), ("en1", "10.0.0.7")]), "10.0.0.7")
+        XCTAssertEqual(LANAddress.choose([("bridge0", "192.168.2.2"), ("en0", "172.20.3.4")]), "172.20.3.4")
+        XCTAssertNil(LANAddress.choose([("en0", "169.254.8.8"), ("utun3", "10.8.0.2")]))
+    }
+
     func testAKnownPhoneKeepsItsFullNameToo() {
         model.remember("Rai's Pixel 8")
         model.serviceDidDiscover(RemoteDevice(id: "pixel", name: "Pixel 8", type: .phone))

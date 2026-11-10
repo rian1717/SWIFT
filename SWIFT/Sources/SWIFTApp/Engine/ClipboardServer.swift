@@ -6,37 +6,50 @@ import Network
 /// LAN address of this Mac, for the pairing QR. Bonjour is the durable
 /// discovery path; the address just lets the first scan connect immediately.
 enum LANAddress {
+    /// The address a phone on the same Wi-Fi can reach. Wi-Fi is not always en0
+    /// (a Mac with Ethernet or a dock can use another), and an interface with no
+    /// network still reports a 169.254 address, so each candidate is judged.
     static func preferredIPv4() -> String? {
         var pointer: UnsafeMutablePointer<ifaddrs>?
         guard getifaddrs(&pointer) == 0, let first = pointer else { return nil }
         defer { freeifaddrs(pointer) }
-        var fallback: String?
+        var found: [(name: String, ip: String)] = []
         var cursor: UnsafeMutablePointer<ifaddrs>? = first
         while let iface = cursor {
             defer { cursor = iface.pointee.ifa_next }
             let flags = Int32(iface.pointee.ifa_flags)
-            let usable = (flags & IFF_UP) != 0 && (flags & IFF_LOOPBACK) == 0
-            guard usable, let address = iface.pointee.ifa_addr,
+            guard (flags & IFF_UP) != 0, (flags & IFF_RUNNING) != 0, (flags & IFF_LOOPBACK) == 0,
+                  let address = iface.pointee.ifa_addr,
                   address.pointee.sa_family == UInt8(AF_INET) else { continue }
             var host = [CChar](repeating: 0, count: Int(NI_MAXHOST))
             guard getnameinfo(address, socklen_t(address.pointee.sa_len),
                               &host, socklen_t(host.count), nil, 0, NI_NUMERICHOST) == 0 else { continue }
-            let ip = Self.cstring(host)
-            let name = Self.cstring(iface.pointee.ifa_name)
-            if name == "en0" { return ip }
-            if name.hasPrefix("en"), fallback == nil { fallback = ip }
+            found.append((Self.cstring(iface.pointee.ifa_name), Self.cstring(host)))
         }
-        return fallback
+        return choose(found)
+    }
+
+    /// Prefers a private LAN address, then en0, then the first en interface.
+    static func choose(_ candidates: [(name: String, ip: String)]) -> String? {
+        let usable = candidates.filter { $0.name.hasPrefix("en") && isLAN($0.ip) }
+        return (usable.first { $0.name == "en0" } ?? usable.first)?.ip
+    }
+
+    /// 10.x, 172.16-31.x and 192.168.x. Link-local 169.254.x.x is not a network.
+    static func isLAN(_ ip: String) -> Bool {
+        let parts = ip.split(separator: ".").compactMap { Int($0) }
+        guard parts.count == 4 else { return false }
+        switch parts[0] {
+        case 10: return true
+        case 172: return (16...31).contains(parts[1])
+        case 192: return parts[1] == 168
+        default: return false
+        }
     }
 
     private static func cstring(_ bytes: UnsafePointer<CChar>) -> String {
-        var copy: [CChar] = []
-        var index = 0
-        while bytes[index] != 0 {
-            copy.append(bytes[index])
-            index += 1
-        }
-        return String(decoding: copy.map { UInt8(bitPattern: $0) }, as: UTF8.self)
+        String(decoding: UnsafeBufferPointer(start: bytes, count: strlen(bytes)).map { UInt8(bitPattern: $0) },
+               as: UTF8.self)
     }
 
     private static func cstring(_ bytes: [CChar]) -> String {
@@ -66,6 +79,11 @@ final class ClipboardServer {
     /// A phone paired the old way moved to its own key. It stays where it was.
     var onUpgradedPhone: ((String) -> Void)?
     private var listener: NWListener?
+    /// Changes on every bind and stop, so a late callback from an old listener is ignored.
+    private var bindGeneration = 0
+    private var reportedBindFailure = false
+    /// How long to wait before trying the port again. Shortened in tests.
+    var rebindDelay: TimeInterval = 3
     private var pendingConnections: Set<ObjectIdentifier> = []
     private var pairAttempts: [Date] = []
     var onApplied: ((String) -> Void)?
@@ -97,6 +115,8 @@ final class ClipboardServer {
     }
 
     func start() {
+        bindGeneration += 1
+        let generation = bindGeneration
         let params = NWParameters.tcp
         params.allowLocalEndpointReuse = true
         // Wi-Fi and Ethernet only. Peer-to-peer would accept a nearby device
@@ -104,8 +124,7 @@ final class ClipboardServer {
         params.includePeerToPeer = false
         guard let port = NWEndpoint.Port(rawValue: listenPort),
               let listener = try? NWListener(using: params, on: port) else {
-            NSLog("SWIFT clipboard: could not bind port \(listenPort)")
-            onListening?(false)
+            bindFailed(generation)
             return
         }
         self.listener = listener
@@ -128,9 +147,13 @@ final class ClipboardServer {
         }
         listener.stateUpdateHandler = { [weak self] (state: NWListener.State) in
             MainActor.assumeIsolated {
+                guard let self, generation == self.bindGeneration else { return }
                 switch state {
-                case .ready: self?.onListening?(true)
-                case .failed: self?.onListening?(false)
+                case .ready:
+                    self.reportedBindFailure = false
+                    self.onListening?(true)
+                case .failed:
+                    self.bindFailed(generation)
                 default: break
                 }
             }
@@ -139,8 +162,27 @@ final class ClipboardServer {
     }
 
     func stop() {
+        bindGeneration += 1
+        reportedBindFailure = false
         listener?.cancel()
         listener = nil
+    }
+
+    /// The port can be held for a moment: another copy of SWIFT is still
+    /// quitting, or a restart has not let go yet. Keep trying, because a server
+    /// that gives up leaves this Mac missing from the phone until the next launch.
+    private func bindFailed(_ generation: Int) {
+        listener?.cancel()
+        listener = nil
+        if !reportedBindFailure {
+            reportedBindFailure = true
+            NSLog("SWIFT clipboard: could not bind port \(listenPort), retrying")
+            onListening?(false)
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + rebindDelay) { [weak self] in
+            guard let self, generation == self.bindGeneration else { return }
+            self.start()
+        }
     }
 
     /// Accept loopback and private LAN peers. A public address is never a phone
@@ -289,7 +331,9 @@ final class ClipboardServer {
             case .refused:
                 respond(Self.http(401, ["ok": false, "error": "unauthorized"])); return
             }
-            if let phone, !phone.isEmpty, phoneIsRemoved(phone) {
+            // A phone with its own key is removed when its key is deleted, which
+            // `authenticate` already reports. The name list is for older phones.
+            if case .legacy = caller, let phone, !phone.isEmpty, phoneIsRemoved(phone) {
                 respond(Self.http(401, ["ok": false, "error": "removed"]))
                 return
             }
@@ -301,21 +345,19 @@ final class ClipboardServer {
             respond(Self.http(200, ["ok": true, "name": deviceName]))
         case ("POST", "/clip"):
             let (caller, body) = authenticate(request)
-            var pairedName: String?
             switch caller {
-            case .phone(let paired): pairedName = paired.name
-            case .legacy: break
+            case .phone, .legacy: break
             case .removed:
                 respond(Self.http(401, ["ok": false, "error": "removed"])); return
             case .refused:
                 respond(Self.http(401, ["ok": false, "error": "unauthorized"])); return
             }
             do {
-                if let pairedName, phoneIsRemoved(pairedName) {
-                    respond(Self.http(401, ["ok": false, "error": "removed"]))
-                    return
-                }
-                if let obj = try? JSONSerialization.jsonObject(with: body) as? [String: Any],
+                // Only an older phone with the shared token is judged by name. A phone
+                // with its own key was already accepted by that key, and its name
+                // can change ("Pixel 8" to "Rai's Pixel 8") without being removed.
+                if case .legacy = caller,
+                   let obj = try? JSONSerialization.jsonObject(with: body) as? [String: Any],
                    let phone = (obj["source"] as? String)?
                     .trimmingCharacters(in: .whitespacesAndNewlines),
                    !phone.isEmpty, phoneIsRemoved(phone) {

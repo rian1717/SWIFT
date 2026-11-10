@@ -175,7 +175,7 @@
                 android:minHeight="56dp"
                 android:layout_marginTop="16dp"
                 android:background="@drawable/bg_field"
-                android:hint="Or paste a pairing link"
+                android:hint="Or paste the pairing link, or type the 8 digits"
                 android:importantForAutofill="no"
                 android:inputType="textUri"
                 android:paddingStart="16dp"
@@ -191,7 +191,7 @@
                 android:layout_height="wrap_content"
                 android:minHeight="56dp"
                 android:layout_marginTop="8dp"
-                android:text="Pair with link" />
+                android:text="Pair" />
         </LinearLayout>
 
         <com.google.android.material.button.MaterialButton

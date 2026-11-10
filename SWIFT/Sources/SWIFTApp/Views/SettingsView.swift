@@ -169,6 +169,11 @@ struct SettingsView: View {
                                     .font(.system(size: 22, weight: .semibold, design: .monospaced))
                                 Text("On the phone, open SWIFT and tap this Mac. The Mac asks you to allow it. Scan this code if the Mac does not appear.")
                                     .secondaryStyle()
+                                Button("Copy pairing link") {
+                                    NSPasteboard.general.clearContents()
+                                    NSPasteboard.general.setString(model.clipboardPairingLink, forType: .string)
+                                }
+                                .help("Send this link to your phone and paste it into SWIFT, or type the 8-digit code instead")
                             }
                         }
                     }

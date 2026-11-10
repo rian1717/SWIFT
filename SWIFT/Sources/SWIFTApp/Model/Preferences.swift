@@ -94,8 +94,13 @@ struct Preferences {
         nonmutating set { defaults.set(newValue, forKey: Key.controlAPIEnabled) }
     }
 
+    /// Absent means on. A new install must be findable by the phone and able to pair
+    /// without the person first hunting for a switch. A person who turns it off keeps it off.
     var clipboardEnabled: Bool {
-        get { defaults.bool(forKey: Key.clipboardEnabled) }
+        get {
+            if defaults.object(forKey: Key.clipboardEnabled) == nil { return true }
+            return defaults.bool(forKey: Key.clipboardEnabled)
+        }
         nonmutating set { defaults.set(newValue, forKey: Key.clipboardEnabled) }
     }
 

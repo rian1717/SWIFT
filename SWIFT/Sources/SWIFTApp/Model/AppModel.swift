@@ -349,8 +349,9 @@ final class AppModel {
             self?.isPhoneRemoved(name) ?? false
         }
         server.onListening = { [weak self] listening in
-            guard let self, self.clipboardStatus == "Off" || self.clipboardStatus == "Starting…" else { return }
-            self.clipboardStatus = listening ? "Waiting for a copy" : "Couldn’t listen on this network"
+            let notListening = "Couldn’t listen on this network"
+            guard let self, ["Off", "Starting…", notListening].contains(self.clipboardStatus) else { return }
+            self.clipboardStatus = listening ? "Waiting for a copy" : notListening
         }
         clipboardServer = server
         clipboardStatus = "Starting…"
@@ -574,11 +575,15 @@ final class AppModel {
     func acceptPairedPhone(_ name: String) {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
-        if isPhoneRemoved(trimmed) {
-            removedPhoneNames.removeAll { $0.caseInsensitiveCompare(trimmed) == .orderedSame }
-            prefs.save(removedPhones: removedPhoneNames)
-        }
+        clearRemoval(matching: trimmed)
         rememberPhone(trimmed)
+    }
+
+    /// Pairing again undoes a removal, under the short name or the long one.
+    private func clearRemoval(matching name: String) {
+        let before = removedPhoneNames.count
+        removedPhoneNames.removeAll { namesMatch($0, name) }
+        if removedPhoneNames.count != before { prefs.save(removedPhones: removedPhoneNames) }
     }
 
     /// Takes a phone off My devices. It can still appear under Nearby while it
@@ -597,8 +602,11 @@ final class AppModel {
         persistKnown()
         // Its clipboard key goes too, whether it is shown by its own name or a nickname.
         let prefs = self.prefs
+        // The key was saved under the name the phone had when it paired ("Pixel 8"),
+        // which can be shorter than the name shown here ("Rai's Pixel 8").
         clipboardPhones.remove { stored in
             stored.caseInsensitiveCompare(trimmed) == .orderedSame
+                || self.namesMatch(stored, trimmed)
                 || prefs.nickname(matching: stored)?.caseInsensitiveCompare(trimmed) == .orderedSame
         }
     }
@@ -658,6 +666,9 @@ final class AppModel {
             changed = true
         }
         if changed {
+            // A phone that is paired now is not removed. Without this, a name left
+            // over from an earlier removal made the Mac refuse every copy from it.
+            clearRemoval(matching: name)
             // "Pixel 8" growing into "Rai's Pixel 8" must not leave the phone listed twice.
             pairedPhoneNames = Self.withoutDuplicates(pairedPhoneNames)
             pairedPhoneNames.sort { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
