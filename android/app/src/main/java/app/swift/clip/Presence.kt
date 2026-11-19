@@ -13,8 +13,6 @@ import android.os.PowerManager
 import android.provider.MediaStore
 import java.io.File
 import java.io.OutputStream
-import java.net.Inet4Address
-import java.net.NetworkInterface
 import java.net.ServerSocket
 import java.net.Socket
 import java.util.concurrent.Executors
@@ -99,7 +97,7 @@ object Presence {
             serviceType = QuickShareSession.SERVICE_TYPE
             port = server.localPort
             setAttribute("n", QuickShareSession.txtName(QuickShareSession.endpointInfo(ClipSync.deviceLabel(context))))
-            lanAddress()?.let { setAttribute("IPv4", it) }
+            LocalNetwork.address(context)?.let { setAttribute("IPv4", it.host) }
         }
         val listener = object : NsdManager.RegistrationListener {
             override fun onServiceRegistered(serviceInfo: NsdServiceInfo) {
@@ -128,30 +126,6 @@ object Presence {
             advertising = false
             registration = null
         }
-    }
-
-    /** This phone's Wi-Fi address, so the Mac can dial it directly. */
-    private fun lanAddress(): String? {
-        val interfaces = NetworkInterface.getNetworkInterfaces() ?: return null
-        val found = ArrayList<Pair<String, String>>()
-        for (nif in interfaces) {
-            if (!nif.isUp || nif.isLoopback) continue
-            val addresses = nif.inetAddresses ?: continue
-            for (addr in addresses) {
-                if (addr !is Inet4Address || addr.isLoopbackAddress) continue
-                val host = addr.hostAddress ?: continue
-                if (isPrivate(host)) found.add(nif.name to host)
-            }
-        }
-        return found.firstOrNull { it.first.startsWith("wlan") }?.second ?: found.firstOrNull()?.second
-    }
-
-    private fun isPrivate(host: String): Boolean {
-        val parts = host.split('.').mapNotNull { it.toIntOrNull() }
-        if (parts.size != 4) return false
-        return parts[0] == 10 ||
-            (parts[0] == 192 && parts[1] == 168) ||
-            (parts[0] == 172 && parts[1] in 16..31)
     }
 
     private fun holdMulticast(context: Context) {

@@ -1,15 +1,80 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <style name="Theme.SWIFT" parent="Theme.Material3.Light.NoActionBar">
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Follows the phone's light or dark mode, like Quick Share. -->
+    <style name="Theme.SWIFT" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/orange</item>
         <item name="colorOnPrimary">@android:color/white</item>
         <item name="colorSurface">@color/card</item>
+        <item name="colorOnSurface">@color/ink</item>
         <item name="android:windowBackground">@color/bg</item>
-        <item name="android:statusBarColor">@color/navy</item>
-        <item name="android:navigationBarColor">@color/bg</item>
-        <item name="android:windowLightStatusBar">false</item>
-        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:statusBarColor">@color/bg</item>
+        <item name="android:navigationBarColor">@color/nav_bg</item>
+        <item name="android:windowLightStatusBar">@bool/light_bars</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="27">@bool/light_bars</item>
         <item name="materialButtonStyle">@style/Widget.SWIFT.Button</item>
+    </style>
+
+    <style name="Widget.SWIFT.Tabs" parent="Widget.Material3.BottomNavigationView">
+        <item name="backgroundTint">@color/nav_bg</item>
+        <item name="itemIconTint">@color/ink</item>
+        <item name="itemTextColor">@color/ink</item>
+        <item name="itemActiveIndicatorStyle">@style/Widget.SWIFT.Tabs.Indicator</item>
+        <item name="labelVisibilityMode">labeled</item>
+        <item name="itemTextAppearanceActive">@style/Text.SWIFT.TabActive</item>
+        <item name="itemTextAppearanceInactive">@style/Text.SWIFT.Tab</item>
+    </style>
+
+    <style name="Widget.SWIFT.Tabs.Indicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:color">@color/nav_indicator</item>
+    </style>
+
+    <style name="Text.SWIFT.Tab" parent="TextAppearance.Material3.LabelLarge">
+        <item name="android:textSize">15sp</item>
+    </style>
+
+    <style name="Text.SWIFT.TabActive" parent="Text.SWIFT.Tab">
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <!-- "You'll appear as", "Your Mac": the small coloured label above each card. -->
+    <style name="Text.SWIFT.Section" parent="">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">26dp</item>
+        <item name="android:layout_marginBottom">10dp</item>
+        <item name="android:paddingStart">4dp</item>
+        <item name="android:textColor">@color/section</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="Text.SWIFT.Name" parent="">
+        <item name="android:textColor">@color/ink</item>
+        <item name="android:textSize">19sp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="Text.SWIFT.Line" parent="">
+        <item name="android:textColor">@color/muted</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:lineSpacingExtra">1dp</item>
+    </style>
+
+    <style name="SWIFT.Card" parent="">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:background">@drawable/bg_card</item>
+        <item name="android:padding">16dp</item>
+    </style>
+
+    <style name="SWIFT.Avatar" parent="">
+        <item name="android:layout_width">56dp</item>
+        <item name="android:layout_height">56dp</item>
+        <item name="android:background">@drawable/bg_avatar</item>
+        <item name="android:padding">14dp</item>
+        <item name="android:scaleType">fitCenter</item>
+        <item name="android:tint">@color/avatar_icon</item>
+        <item name="android:importantForAccessibility">no</item>
     </style>
 
     <style name="Theme.SWIFT.Splash" parent="Theme.SplashScreen">

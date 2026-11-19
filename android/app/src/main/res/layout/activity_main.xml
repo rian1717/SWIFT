@@ -1,337 +1,535 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<!--
+  Laid out like Android's Quick Share screen: a large title, a small coloured label
+  above each card, and two tabs at the bottom. Mac holds pairing and the clipboard;
+  iPhone holds the code for the iPhone camera.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/bg"
-    android:clipToPadding="false"
-    android:fillViewport="true"
-    android:fitsSystemWindows="true">
+    android:orientation="vertical">
 
-    <LinearLayout
+    <ScrollView
+        android:id="@+id/scroll"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingBottom="32dp">
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_header"
             android:orientation="vertical"
-            android:paddingStart="24dp"
-            android:paddingTop="28dp"
-            android:paddingEnd="24dp"
-            android:paddingBottom="28dp">
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="24dp">
 
-            <FrameLayout
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <ImageView
-                    android:layout_width="44dp"
-                    android:layout_height="44dp"
-                    android:contentDescription="@string/app_name"
-                    android:src="@drawable/ic_mark" />
+                android:layout_height="64dp"
+                android:gravity="center_vertical|end"
+                android:orientation="horizontal">
 
                 <ImageButton
                     android:id="@+id/add_phone"
-                    android:layout_width="44dp"
-                    android:layout_height="44dp"
-                    android:layout_gravity="end|center_vertical"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
                     android:background="?android:attr/selectableItemBackgroundBorderless"
                     android:contentDescription="Add phone"
-                    android:padding="10dp"
+                    android:padding="12dp"
                     android:scaleType="fitCenter"
-                    android:src="@drawable/ic_qr" />
-            </FrameLayout>
+                    android:src="@drawable/ic_qr"
+                    app:tint="@color/ink" />
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
-                android:letterSpacing="-0.03"
-                android:text="@string/app_name"
-                android:textColor="@color/on_navy"
-                android:textSize="34sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/status"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="Find your Mac"
-                android:textColor="@android:color/white"
-                android:textSize="18sp" />
-
-            <TextView
-                android:id="@+id/next"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:lineSpacingExtra="2dp"
-                android:textColor="@color/on_navy_muted"
-                android:textSize="15sp" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/phone_section"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="20dp"
-            android:layout_marginEnd="20dp"
-            android:background="@drawable/bg_card"
-            android:elevation="6dp"
-            android:orientation="vertical"
-            android:outlineProvider="background"
-            android:padding="20dp">
-
-            <TextView
-                style="@style/Text.SWIFT.CardTitle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="This phone" />
-
-            <TextView
-                style="@style/Text.SWIFT.Help"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="This is the name your Mac sees. A model name does not replace it." />
-
-            <EditText
-                android:id="@+id/phone_name"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="56dp"
-                android:layout_marginTop="16dp"
-                android:background="@drawable/bg_field"
-                android:hint="Phone name"
-                android:importantForAutofill="no"
-                android:inputType="text"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:textColor="@color/ink"
-                android:textColorHint="@color/muted"
-                android:textSize="15sp" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/save_name"
-                style="@style/Widget.SWIFT.Button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="56dp"
-                android:layout_marginTop="8dp"
-                android:text="Save name" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/pair_section"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="20dp"
-            android:layout_marginEnd="20dp"
-            android:background="@drawable/bg_card"
-            android:elevation="6dp"
-            android:orientation="vertical"
-            android:outlineProvider="background"
-            android:padding="20dp">
-
-            <TextView
-                style="@style/Text.SWIFT.CardTitle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Your Mac" />
-
-            <TextView
-                style="@style/Text.SWIFT.Help"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="Same Wi-Fi. Tap the Mac when it appears." />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/find"
-                style="@style/Widget.SWIFT.Button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="56dp"
-                android:layout_marginTop="16dp"
-                android:text="Find Mac" />
+                <ImageButton
+                    android:id="@+id/menu"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="More"
+                    android:padding="12dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_more"
+                    app:tint="@color/ink" />
+            </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/macs"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:orientation="vertical" />
+                android:layout_marginTop="12dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
-            <EditText
-                android:id="@+id/link"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="56dp"
-                android:layout_marginTop="16dp"
-                android:background="@drawable/bg_field"
-                android:hint="Or paste the pairing link, or type the 8 digits"
-                android:importantForAutofill="no"
-                android:inputType="textUri"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:textColor="@color/ink"
-                android:textColorHint="@color/muted"
-                android:textSize="15sp" />
+                <ImageView
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_mark" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:letterSpacing="-0.01"
+                    android:text="@string/app_name"
+                    android:textColor="@color/ink"
+                    android:textSize="44sp" />
+            </LinearLayout>
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/pair_link"
-                style="@style/Widget.SWIFT.Button.Quiet"
+                android:id="@+id/crash_report"
+                style="@style/Widget.SWIFT.Button.Danger"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minHeight="56dp"
-                android:layout_marginTop="8dp"
-                android:text="Pair" />
+                android:layout_marginTop="16dp"
+                android:minHeight="48dp"
+                android:paddingTop="10dp"
+                android:paddingBottom="10dp"
+                android:text="SWIFT stopped last time. Copy the report"
+                android:textSize="14sp"
+                android:visibility="gone" />
+
+            <!-- Mac tab -->
+            <LinearLayout
+                android:id="@+id/page_mac"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    style="@style/Text.SWIFT.Section"
+                    android:text="You’ll appear as" />
+
+                <LinearLayout
+                    android:id="@+id/phone_card"
+                    style="@style/SWIFT.Card"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?android:attr/selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        style="@style/SWIFT.Avatar"
+                        android:src="@drawable/ic_phone" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/phone_label"
+                            style="@style/Text.SWIFT.Name"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:ellipsize="end"
+                            android:maxLines="1" />
+
+                        <TextView
+                            style="@style/Text.SWIFT.Line"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Your Mac sees this name. Tap to change." />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <TextView
+                    style="@style/Text.SWIFT.Section"
+                    android:text="Your Mac" />
+
+                <LinearLayout
+                    style="@style/SWIFT.Card"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            style="@style/SWIFT.Avatar"
+                            android:src="@drawable/ic_laptop" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/mac_name"
+                                style="@style/Text.SWIFT.Name"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:ellipsize="end"
+                                android:maxLines="1" />
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal">
+
+                                <ImageView
+                                    android:id="@+id/mac_dot"
+                                    android:layout_width="8dp"
+                                    android:layout_height="8dp"
+                                    android:layout_marginEnd="8dp"
+                                    android:importantForAccessibility="no"
+                                    android:src="@drawable/dot" />
+
+                                <TextView
+                                    android:id="@+id/mac_state"
+                                    style="@style/Text.SWIFT.Line"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1" />
+                            </LinearLayout>
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Until a Mac is paired, or while pairing a different one. -->
+                    <LinearLayout
+                        android:id="@+id/pair_section"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:orientation="vertical">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/find"
+                            style="@style/Widget.SWIFT.Button"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:minHeight="52dp"
+                            android:text="Find Mac" />
+
+                        <ScrollView
+                            android:id="@+id/macs_scroll"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:nestedScrollingEnabled="true">
+
+                            <LinearLayout
+                                android:id="@+id/macs"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical" />
+                        </ScrollView>
+
+                        <TextView
+                            android:id="@+id/mac_hint"
+                            style="@style/Text.SWIFT.Line"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:visibility="gone" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:orientation="horizontal">
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/pair_link"
+                                style="@style/Widget.SWIFT.Button.Quiet"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:minHeight="48dp"
+                                android:paddingTop="10dp"
+                                android:paddingBottom="10dp"
+                                android:text="Use a link or 8 digits"
+                                android:textSize="15sp" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/pair_cancel"
+                                style="@style/Widget.SWIFT.Button.Quiet"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="8dp"
+                                android:minHeight="48dp"
+                                android:paddingTop="10dp"
+                                android:paddingBottom="10dp"
+                                android:text="Cancel"
+                                android:textSize="15sp"
+                                android:visibility="gone" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <TextView
+                    style="@style/Text.SWIFT.Section"
+                    android:text="Clipboard" />
+
+                <LinearLayout
+                    android:id="@+id/setup_section"
+                    style="@style/SWIFT.Card"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:id="@+id/setup_done"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            style="@style/SWIFT.Avatar"
+                            android:src="@drawable/ic_clipboard" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/clip_title"
+                                style="@style/Text.SWIFT.Name"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content" />
+
+                            <TextView
+                                android:id="@+id/clip_line"
+                                style="@style/Text.SWIFT.Line"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/access_row"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:gravity="center_vertical"
+                        android:minHeight="48dp"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/access_help"
+                            style="@style/Text.SWIFT.Line"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:textColor="@color/ink" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/access"
+                            style="@style/Widget.SWIFT.Button"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:minHeight="44dp"
+                            android:paddingLeft="18dp"
+                            android:paddingTop="8dp"
+                            android:paddingRight="18dp"
+                            android:paddingBottom="8dp"
+                            android:text="Turn on"
+                            android:textSize="15sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/background_row"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center_vertical"
+                        android:minHeight="48dp"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/background_help"
+                            style="@style/Text.SWIFT.Line"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:textColor="@color/ink" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/background"
+                            style="@style/Widget.SWIFT.Button.Quiet"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:minHeight="44dp"
+                            android:paddingLeft="18dp"
+                            android:paddingTop="8dp"
+                            android:paddingRight="18dp"
+                            android:paddingBottom="8dp"
+                            android:text="Allow"
+                            android:textSize="15sp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- iPhone tab -->
+            <LinearLayout
+                android:id="@+id/page_iphone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    style="@style/Text.SWIFT.Section"
+                    android:text="Send to iPhone" />
+
+                <LinearLayout
+                    android:id="@+id/iphone_section"
+                    style="@style/SWIFT.Card"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:paddingTop="24dp"
+                    android:paddingBottom="12dp">
+
+                    <FrameLayout
+                        android:id="@+id/photo_qr_box"
+                        android:layout_width="184dp"
+                        android:layout_height="184dp"
+                        android:background="@drawable/bg_qr"
+                        android:padding="6dp">
+
+                        <ImageView
+                            android:id="@+id/photo_qr"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:contentDescription="Code for the iPhone camera"
+                            android:scaleType="fitCenter" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:id="@+id/photo_offline"
+                        style="@style/Text.SWIFT.Name"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:paddingTop="24dp"
+                        android:paddingBottom="8dp"
+                        android:text="Connect this phone to the same Wi-Fi as the iPhone."
+                        android:visibility="gone" />
+
+                    <TextView
+                        android:id="@+id/photo_count"
+                        style="@style/Text.SWIFT.Name"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="18dp"
+                        android:gravity="center" />
+
+                    <TextView
+                        android:id="@+id/photo_status"
+                        style="@style/Text.SWIFT.Line"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:gravity="center" />
+
+                    <TextView
+                        android:id="@+id/photo_address"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:ellipsize="middle"
+                        android:gravity="center"
+                        android:singleLine="true"
+                        android:textColor="@color/muted"
+                        android:textSize="12sp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/photo_send"
+                        style="@style/Widget.SWIFT.Button"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="18dp"
+                        android:minHeight="52dp"
+                        android:text="Send photos or videos" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/photo_new"
+                        style="@style/Widget.Material3.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:minHeight="44dp"
+                        android:text="New link"
+                        android:textAllCaps="false"
+                        android:textColor="@color/muted"
+                        android:textSize="15sp" />
+                </LinearLayout>
+
+                <TextView
+                    style="@style/Text.SWIFT.Section"
+                    android:text="From iPhone" />
+
+                <LinearLayout
+                    android:id="@+id/received_card"
+                    style="@style/SWIFT.Card"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?android:attr/selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        style="@style/SWIFT.Avatar"
+                        android:layout_width="64dp"
+                        android:layout_height="64dp"
+                        android:background="@drawable/bg_tile"
+                        android:padding="18dp"
+                        android:src="@drawable/ic_photos" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            style="@style/Text.SWIFT.Name"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Photos from the iPhone" />
+
+                        <TextView
+                            style="@style/Text.SWIFT.Line"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="In your gallery, in the SWIFT album" />
+                    </LinearLayout>
+
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/bg_round_quiet"
+                        android:importantForAccessibility="no"
+                        android:padding="8dp"
+                        android:src="@drawable/ic_chevron"
+                        app:tint="@color/ink" />
+                </LinearLayout>
+            </LinearLayout>
         </LinearLayout>
+    </ScrollView>
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/pair_again"
-            style="@style/Widget.SWIFT.Button.Quiet"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-                android:minHeight="56dp"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="20dp"
-            android:layout_marginEnd="20dp"
-            android:text="Pair a different Mac"
-            android:visibility="gone" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/remove_mac"
-            style="@style/Widget.SWIFT.Button.Danger"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-                android:minHeight="56dp"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginEnd="20dp"
-            android:text="Remove this Mac"
-            android:visibility="gone" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="14dp"
-            android:layout_marginEnd="20dp"
-            android:background="@drawable/bg_card"
-            android:elevation="6dp"
-            android:orientation="vertical"
-            android:outlineProvider="background"
-            android:padding="20dp">
-
-            <TextView
-                style="@style/Text.SWIFT.CardTitle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Clipboard" />
-
-            <TextView
-                android:id="@+id/access_help"
-                style="@style/Text.SWIFT.Help"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/access"
-                style="@style/Widget.SWIFT.Button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="56dp"
-                android:layout_marginTop="16dp"
-                android:text="Turn on clipboard access" />
-
-            <TextView
-                android:id="@+id/background_help"
-                style="@style/Text.SWIFT.Help"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/background"
-                style="@style/Widget.SWIFT.Button.Quiet"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="56dp"
-                android:layout_marginTop="10dp"
-                android:text="Keep running in the background" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="14dp"
-            android:layout_marginEnd="20dp"
-            android:background="@drawable/bg_card"
-            android:elevation="6dp"
-            android:orientation="vertical"
-            android:outlineProvider="background"
-            android:padding="20dp">
-
-            <TextView
-                style="@style/Text.SWIFT.CardTitle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="iPhone" />
-
-            <TextView
-                android:id="@+id/photo_status"
-                style="@style/Text.SWIFT.Help"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp" />
-
-            <ImageView
-                android:id="@+id/photo_qr"
-                android:layout_width="220dp"
-                android:layout_height="220dp"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="16dp"
-                android:background="@drawable/bg_field"
-                android:contentDescription="Code for the iPhone camera"
-                android:padding="12dp"
-                android:scaleType="fitCenter" />
-
-            <TextView
-                android:id="@+id/photo_address"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:gravity="center"
-                android:textColor="@color/muted"
-                android:textIsSelectable="true"
-                android:textSize="12sp" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/photo_send"
-                style="@style/Widget.SWIFT.Button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="56dp"
-                android:layout_marginTop="16dp"
-                android:text="Send photos" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/photo_new"
-                style="@style/Widget.SWIFT.Button.Quiet"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="56dp"
-                android:layout_marginTop="8dp"
-                android:text="New link" />
-        </LinearLayout>
-    </LinearLayout>
-</ScrollView>
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/tabs"
+        style="@style/Widget.SWIFT.Tabs"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:menu="@menu/tabs" />
+</LinearLayout>

@@ -74,6 +74,38 @@ phone allowed to keep SWIFT running. Copy again, then press ⌘V.
 iPhone copies do not use this path. They paste through Apple Handoff when both
 devices are signed into the same Apple ID.
 
+**Clipboard worked, then stopped, or the phone said "SWIFT keeps stopping".**
+Update to 0.3.2 or later; versions before it hit an Android 15 time limit.
+If the app says **Clipboard access stopped**, tap **Turn clipboard access on
+again**, switch SWIFT off, then on. If the app shows **SWIFT stopped last time**,
+tap it to copy the crash report and paste it into a GitHub issue.
+
+## The iPhone page
+
+**Safari says "took too long to respond" or "can't be reached".** Both phones
+must be on the same Wi-Fi. The address under the code on Android should start
+like your other devices' addresses on that Wi-Fi, often `192.168.`. If the
+Android phone's Wi-Fi dropped, the code changes by itself within 2 seconds; scan
+it again. With no Wi-Fi, SWIFT shows no code. A phone's own hotspot works too:
+join it from the iPhone, then scan.
+
+**Saving stops partway.** Keep Safari open on the iPhone and SWIFT open on
+Android until the button says **Save all … to Photos**. A photo that stops
+coming is asked for again by itself. If the button says **Try again**, the
+Android phone stopped answering: check that it is still on the same Wi-Fi.
+
+**Safari says "This Connection Is Not Private" after Save all to Photos.** That
+is expected. The page comes from the Android phone on your Wi-Fi, and no
+internet authority can vouch for a home address. Tap **Show Details**, then
+**visit this website**, then **Visit Website**. Then tap **Save all to Photos**
+and choose **Save** in the menu that opens.
+
+**SWIFT says the phone's storage is full.** It keeps a copy of each photo
+until you tap **New link** or close the app. Free some space, then send again.
+
+**Only one photo at a time saves.** On the plain page, tap a photo, then touch
+and hold it and choose **Save to Photos**. Use **Save all to Photos** for many.
+
 ## Report a compatibility problem
 
 Attach the non-sensitive fields from

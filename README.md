@@ -24,7 +24,7 @@ Your phone already shares with Quick Share. Your Mac shares with AirDrop. Those 
 
 Pair the Android phone once. After that it stays connected. You do not pair again for the next file, and you do not pair again for the next copy.
 
-An iPhone does not install anything. The Android phone shows a QR code. Safari opens it. The photo is the original file.
+An iPhone does not install anything. The Android phone shows a QR code. Safari opens it, and **Save all to Photos** puts every photo and video into Photos as the original file. Share photos to **SWIFT** from any Android app and the code opens with them ready.
 
 Install it from source with one command, or download the ready-made files from the [latest release](https://github.com/rian1717/SWIFT/releases/latest). See [Install](#install).
 

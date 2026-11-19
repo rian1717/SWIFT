@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dark mode: the same navy, orange and cream, with navy as the background. -->
+<resources>
+    <color name="bg">#111A27</color>
+    <color name="card">#1D2B40</color>
+    <color name="ink">#F6F1EA</color>
+    <color name="muted">#A9B2BE</color>
+    <color name="line">#2C3D57</color>
+    <color name="field">#263750</color>
+    <color name="quiet">#2A3B55</color>
+    <color name="section">#F3A673</color>
+    <color name="avatar_fill">#F6C9A8</color>
+    <color name="avatar_icon">#1D2B40</color>
+    <color name="nav_bg">#18243A</color>
+    <color name="nav_indicator">#5C3B23</color>
+    <color name="ok">#6FCF97</color>
+    <color name="away">#7E8898</color>
+    <color name="danger">#F2A49E</color>
+    <color name="danger_fill">#4A2624</color>
+</resources>

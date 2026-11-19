@@ -5,6 +5,31 @@ SWIFT uses semantic versioning after the first stable release.
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-11-17
+
+### Fixed
+
+- Clipboard stopped working after about a day, and some phones showed "SWIFT keeps stopping". Android 15 gives a "data sync" background service 6 hours a day, then stops the app, and the app crashed again each time it came back. SWIFT now runs as a connected-device service, which has no daily limit, and a refusal from Android can no longer crash it.
+- A download that an iPhone cut off halfway, or a photo that could not be read, could stop the whole Android app.
+- The iPhone page broke at around 17 photos. It showed every photo at full size, which ran Safari out of memory, and refused connections past the eighth. It now shows small previews and has no limit on how many.
+- The QR code could hold the phone's mobile-data address instead of its Wi-Fi address (both often start with 10.), so Safari timed out. SWIFT now gives out only a Wi-Fi or hotspot address, never mobile data or a VPN, and the code updates by itself within 2 seconds when Wi-Fi changes. With no Wi-Fi it shows no code and says so. The same fix applies to how the Mac finds the phone.
+- Photos could stop partway to the iPhone. Spare connections that Safari opens held the phone's threads for a minute each; now a connection that asks for nothing is closed after 10 seconds. Wi-Fi is kept awake while photos move, and Android can no longer delete the copies when the phone runs low on storage.
+- In the background the phone now asks the Mac once a minute, not every 2 seconds, and never with the screen off.
+- The app showed the Mac as set up even when the Mac was asleep or on another network. The Mac card now shows live whether it answers: Connected, or Not on this Wi-Fi.
+- When the Mac got a new address from the router, the phone could keep using the old one. It now searches the whole network for the Mac, and that search no longer waits on itself and stops.
+
+### Added
+
+- **Save all to Photos** on the iPhone page, straight into Photos, not Files. One tap saves up to 100 photos or 300 MB, so a typical set of 72 goes in one tap. Photos load four at a time with real progress, a broken one resumes where it stopped, and the iPhone screen stays on while they load. If Safari takes fewer at once, the page halves the batch without downloading anything again. Safari allows this only on a secure page, so it warns once: tap Show Details, then visit this website.
+- **Save all to Gallery** when the page is opened in Chrome on another Android phone. The photos land in the Download album, which Google Photos and every gallery show.
+- The iPhone page keeps **Save all** and **Send to Android** at the bottom of the screen, so a long grid never hides them. Sending from the iPhone retries a file that fails.
+- A new Android app layout in the style of Quick Share: two tabs, **Mac** and **iPhone**, rounded cards, and light or dark to match the phone. The iPhone QR code is small and fixed. Pairing a different Mac, removing the Mac and the crash report are in the ⋮ menu; tap the phone name to change it. Clipboard setup shows only what still needs doing.
+- When the phone's storage is full, SWIFT says so instead of quietly adding fewer photos.
+- Videos go to and from the iPhone, not only photos.
+- SWIFT is in Android's Share menu. Pick photos or videos in Google Photos or any app, tap Share, then SWIFT, and the QR code for the iPhone opens with them ready.
+- If SWIFT ever crashes, the app offers to copy the crash report the next time it opens.
+- The app says when clipboard access is switched on in Settings but Android has stopped it.
+
 ## [0.3.1] - 2026-11-11
 
 ### Fixed

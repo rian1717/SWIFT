@@ -36,6 +36,11 @@ object ClipSync {
             "Or type the 8 digits from SWIFT settings below."
     private const val MAC_SEARCH_GAP_MS = 20_000L
     private val work = Executors.newSingleThreadExecutor()
+    /**
+     * The address-by-address search runs on its own thread. A search started from `work`
+     * (a copy, or the status check) waits for it, and would otherwise wait for itself.
+     */
+    private val scan = Executors.newSingleThreadExecutor()
     private val main by lazy { Handler(Looper.getMainLooper()) }
     private var lastHash = ""
     private var lastMacSearch = 0L
@@ -62,27 +67,56 @@ object ClipSync {
 
     /** The open screen, so a remove on the Mac updates it without a restart. */
     var onRemoved: (() -> Unit)? = null
+
+    /** Whether the paired Mac answers right now. Paired is not the same as nearby. */
+    enum class MacState { CHECKING, NEARBY, AWAY }
+    @Volatile
+    var macState = MacState.CHECKING
+        private set
+    /** The open screen, so the Mac's status changes on screen as soon as it is known. */
+    var onMacState: ((MacState) -> Unit)? = null
+    private var misses = 0
+
+    private fun publish(state: MacState) {
+        if (macState == state) return
+        macState = state
+        main.post { onMacState?.invoke(state) }
+    }
     private var appContext: Context? = null
     private var checking = false
+    /** True while the SWIFT screen is open. Then a remove on the Mac shows at once. */
+    @Volatile
+    var screenOpen = false
     private val watch = object : Runnable {
         override fun run() {
             val context = appContext ?: return
             if (!isPaired(context)) return
-            if (!checking) {
+            // In the background a check once a minute is enough: a copy refused by
+            // the Mac also reports the remove. With the screen off, no check at all.
+            main.postDelayed(this, if (screenOpen) 2_000 else 60_000)
+            val awake = context.getSystemService(android.os.PowerManager::class.java)?.isInteractive != false
+            if (awake && !checking) {
                 checking = true
                 work.execute {
-                    val removed = macRemovedThisPhone(context)
+                    val answer = checkMac(context)
                     checking = false
-                    if (removed) {
-                        forget(context)
-                        main.post {
-                            ClipForegroundService.update(context, "Removed on the Mac")
-                            onRemoved?.invoke()
+                    when (answer) {
+                        Check.REMOVED -> {
+                            forget(context)
+                            main.post {
+                                ClipForegroundService.update(context, "Removed on the Mac")
+                                onRemoved?.invoke()
+                            }
                         }
+                        Check.NEARBY -> {
+                            misses = 0
+                            publish(MacState.NEARBY)
+                        }
+                        // Two misses in a row, so one dropped packet does not flash "not nearby".
+                        Check.AWAY -> if (++misses >= 2) publish(MacState.AWAY)
                     }
                 }
             }
-            main.postDelayed(this, 2_000)
         }
     }
 
@@ -125,6 +159,9 @@ object ClipSync {
             .remove("name")
             .apply()
         lastHash = ""
+        // The next Mac starts as unknown, not as whatever the last one was.
+        macState = MacState.CHECKING
+        misses = 0
     }
 
     /** A pairing with this phone's own key. The shared token is dropped. */
@@ -217,7 +254,7 @@ object ClipSync {
         val finishOnce = {
             if (ended.compareAndSet(false, true)) {
                 if (seen.isEmpty()) {
-                    work.execute { scanSubnet(report); main.post(finished) }
+                    scan.execute { scanSubnet(context, report); main.post(finished) }
                 } else {
                     main.post(finished)
                 }
@@ -300,39 +337,35 @@ object ClipSync {
 
         val path = "/clip/status"
         val body = JSONObject().put("device", deviceLabel(context)).toString().toByteArray()
-        for (mac in macs.toList().filter { it.host != oldHost }) {
+        fun tryAt(mac: Mac): Boolean {
             try {
                 val sealed = ClipCrypto.seal(body, nextCounter(context), key, path, id)
                 post(mac.host, mac.port, path, sealed, "application/octet-stream", "SWIFT $id")
             } catch (_: Exception) {
-                continue
+                return false
             }
             prefs.edit().putString("host", mac.host).putInt("port", mac.port).commit()
             return true
         }
+        val tried = HashSet<String>()
+        for (mac in macs.toList().filter { it.host != oldHost }) {
+            if (tried.add(mac.host) && tryAt(mac)) return true
+        }
+        // Discovery can hand back a stale address it remembers. Ask each address on this
+        // Wi-Fi as well before deciding the Mac is not here.
+        val scanned = Collections.synchronizedList(mutableListOf<Mac>())
+        scanSubnet(context) { scanned.add(it) }
+        for (mac in scanned.toList().filter { it.host != oldHost }) {
+            if (tried.add(mac.host) && tryAt(mac)) return true
+        }
         return false
     }
 
-    /** This phone's Wi-Fi address and how many bits of it name the network. */
-    private fun wifiAddress(): Pair<ByteArray, Int>? {
-        val interfaces = try { java.net.NetworkInterface.getNetworkInterfaces() } catch (_: Exception) { null } ?: return null
-        var fallback: Pair<ByteArray, Int>? = null
-        for (nic in interfaces) {
-            if (!nic.isUp || nic.isLoopback) continue
-            for (a in nic.interfaceAddresses) {
-                val ip = a.address as? java.net.Inet4Address ?: continue
-                if (!ip.isSiteLocalAddress) continue
-                val found = ip.address to a.networkPrefixLength.toInt()
-                if (nic.name.startsWith("wlan")) return found
-                if (fallback == null) fallback = found
-            }
-        }
-        return fallback
-    }
-
     /** Asks every address on this Wi-Fi whether a SWIFT Mac answers on its port. */
-    private fun scanSubnet(found: (Mac) -> Unit) {
-        val (mine, prefix) = wifiAddress() ?: return
+    private fun scanSubnet(context: Context, found: (Mac) -> Unit) {
+        val local = LocalNetwork.address(context) ?: return
+        val mine = local.bytes
+        val prefix = local.prefix
         // A /24 around this phone is enough, and keeps a large network from taking minutes.
         val bits = prefix.coerceIn(24, 30)
         val me = mine.fold(0L) { acc, b -> (acc shl 8) or (b.toLong() and 0xff) }
@@ -831,15 +864,26 @@ object ClipSync {
         return next
     }
 
-    /** True only when the Mac says this phone was removed. A network miss stays paired. */
-    private fun macRemovedThisPhone(context: Context): Boolean {
-        if (!isPaired(context)) return false
+    private enum class Check { NEARBY, AWAY, REMOVED }
+
+    /**
+     * Asks the Mac whether this phone is still paired. A network miss means the Mac is
+     * asleep or on another network: still paired, just not nearby. Only the Mac saying
+     * so counts as a remove.
+     */
+    private fun checkMac(context: Context): Check {
+        if (!isPaired(context)) return Check.AWAY
         val body = JSONObject().put("device", deviceLabel(context)).toString().toByteArray()
         return try {
             authed(context, "/clip/status", body)
-            false
+            Check.NEARBY
+        } catch (_: IOException) {
+            // The router may have given the Mac a new address. While the screen is open,
+            // look for it (at most every 20 seconds), so a Mac that is right here is never
+            // shown as not nearby. In the background, no Wi-Fi scans.
+            if (screenOpen && findMovedMac(context)) Check.NEARBY else Check.AWAY
         } catch (error: Exception) {
-            error.message.orEmpty().contains("removed")
+            if (error.message.orEmpty().contains("removed")) Check.REMOVED else Check.NEARBY
         }
     }
 

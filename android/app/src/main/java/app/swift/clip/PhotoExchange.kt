@@ -32,7 +32,10 @@ object PhotoExchange {
         val photo: ByteArray? = null,
     )
 
-    fun read(input: InputStream): Incoming? {
+    /** The request line and headers. The body is left in `input` for the caller. */
+    data class Head(val method: String, val path: String, val headers: Map<String, String>)
+
+    fun readHead(input: InputStream): Head? {
         val header = readUntil(input, byteArrayOf(13, 10, 13, 10), 64 * 1024) ?: return null
         val text = String(header, Charsets.ISO_8859_1)
         val first = text.lineSequence().firstOrNull()?.trim() ?: return null
@@ -44,10 +47,15 @@ object PhotoExchange {
             if (name.isEmpty()) continue
             headers[name] = line.substringAfter(":", "").trim()
         }
-        val length = headers["content-length"]?.toIntOrNull() ?: 0
+        return Head(parts[0], parts[1].substringBefore("?"), headers)
+    }
+
+    fun read(input: InputStream): Incoming? {
+        val head = readHead(input) ?: return null
+        val length = head.headers["content-length"]?.toIntOrNull() ?: 0
         if (length < 0 || length > MAX_BYTES) return null
         val body = if (length == 0) ByteArray(0) else readExactly(input, length)
-        return Incoming(parts[0], parts[1].substringBefore("?"), headers, body)
+        return Incoming(head.method, head.path, head.headers, body)
     }
 
     fun decide(request: Incoming, expectedCode: String, hostName: String, token: String, issueToken: () -> String): Decision {

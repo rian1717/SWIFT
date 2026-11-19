@@ -2,10 +2,15 @@ package app.swift.clip
 
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityServiceInfo
+import android.content.BroadcastReceiver
 import android.content.ClipboardManager
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.PixelFormat
 import android.os.Handler
 import android.os.Looper
+import android.os.PowerManager
 import android.view.Gravity
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
@@ -35,8 +40,18 @@ class ClipboardAccessibilityService : AccessibilityService() {
     private val listener = ClipboardManager.OnPrimaryClipChangedListener {
         deliver(readClip(), recentSelection())
     }
+    /** Nothing can be copied while the screen is off, so the poll rests then. */
+    private var screen: BroadcastReceiver? = null
+
+    companion object {
+        /** True while Android has this service connected, not only switched on in Settings. */
+        @Volatile
+        var running = false
+            private set
+    }
 
     override fun onServiceConnected() {
+        running = true
         val info = serviceInfo ?: AccessibilityServiceInfo()
         info.eventTypes = info.eventTypes or
             AccessibilityEvent.TYPE_VIEW_CLICKED or
@@ -72,8 +87,28 @@ class ClipboardAccessibilityService : AccessibilityService() {
         clipboard = getSystemService(ClipboardManager::class.java)
         clipboard?.addPrimaryClipChangedListener(listener)
         if (ClipSync.isPaired(this)) ClipForegroundService.start(this)
+        watchScreen()
         handler.removeCallbacks(poll)
-        handler.post(poll)
+        if (getSystemService(PowerManager::class.java)?.isInteractive != false) handler.post(poll)
+    }
+
+    private fun watchScreen() {
+        if (screen != null) return
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                handler.removeCallbacks(poll)
+                if (intent.action == Intent.ACTION_SCREEN_ON) handler.post(poll)
+            }
+        }
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_SCREEN_ON)
+            addAction(Intent.ACTION_SCREEN_OFF)
+        }
+        try {
+            registerReceiver(receiver, filter)
+            screen = receiver
+        } catch (_: Exception) {
+        }
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
@@ -96,13 +131,12 @@ class ClipboardAccessibilityService : AccessibilityService() {
     override fun onInterrupt() {}
 
     override fun onDestroy() {
+        running = false
         handler.removeCallbacks(poll)
         clipboard?.removePrimaryClipChangedListener(listener)
-        val restart = android.content.Intent(applicationContext, ClipForegroundService::class.java)
-        try {
-            applicationContext.startForegroundService(restart)
-        } catch (_: Exception) {
-        }
+        screen?.let { try { unregisterReceiver(it) } catch (_: Exception) {} }
+        screen = null
+        ClipForegroundService.start(applicationContext)
         super.onDestroy()
     }
 
