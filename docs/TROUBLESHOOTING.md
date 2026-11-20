@@ -108,7 +108,12 @@ and hold it and choose **Save to Photos**. Use **Save all to Photos** for many.
 
 ## Report a compatibility problem
 
-Attach the non-sensitive fields from
-[`REAL_DEVICE_TEST_MATRIX.md`](REAL_DEVICE_TEST_MATRIX.md). Never attach file
-contents, API tokens, transfer PINs, or full packet captures containing private
-data.
+Open an issue with the [compatibility template](https://github.com/rian1717/SWIFT/issues/new/choose) and include:
+
+- SWIFT version on the Mac and on the phone
+- Mac model and macOS version
+- Phone model, Android version, and Quick Share version
+- What you tried, what happened, and what you expected
+- Whether a VPN or a guest or client-isolated Wi-Fi was in use
+
+Never attach file contents, API tokens, transfer PINs, or packet captures that contain private data.
